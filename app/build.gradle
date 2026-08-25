@@ -10,13 +10,16 @@ android {
         applicationId 'com.boxmeasure.app'
         minSdk 26
         targetSdk 35
-        versionCode 12
-        versionName '1.1.4'
+        versionCode 13
+        versionName '1.1.5'
+        multiDexEnabled false
     }
 
     buildTypes {
         debug {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
         }
         release {
             minifyEnabled false
