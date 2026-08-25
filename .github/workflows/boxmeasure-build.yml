@@ -32,15 +32,18 @@ jobs:
           APK=app/build/outputs/apk/debug/app-debug.apk
           test -f "$APK"
           unzip -t "$APK" >/dev/null
+          DEX_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^classes([0-9]+)?\.dex$')
+          echo "DEX files: $DEX_COUNT"
+          test "$DEX_COUNT" -eq 1
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -20
-          cp "$APK" BoxMeasure-v1.1.4-clean.apk
-          sha256sum BoxMeasure-v1.1.4-clean.apk > BoxMeasure-v1.1.4-clean.apk.sha256
+          cp "$APK" BoxMeasure-v1.1.5-clean.apk
+          sha256sum BoxMeasure-v1.1.5-clean.apk > BoxMeasure-v1.1.5-clean.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: BoxMeasure-v1.1.4-clean
+          name: BoxMeasure-v1.1.5-clean
           path: |
-            BoxMeasure-v1.1.4-clean.apk
-            BoxMeasure-v1.1.4-clean.apk.sha256
+            BoxMeasure-v1.1.5-clean.apk
+            BoxMeasure-v1.1.5-clean.apk.sha256
           if-no-files-found: error
           retention-days: 30
