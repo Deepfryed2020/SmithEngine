@@ -1,38 +1,583 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>BoxMeasure</title>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>BoxMeasure</title>
 <style>
-:root{--bg:#07111f;--p:#0d1b2c;--p2:#10243a;--line:#27435f;--txt:#edf7ff;--muted:#9db2c8;--blue:#2f8cff;--mint:#66e1bd;--warn:#ffca63;--red:#ff7070}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif}.app{max-width:760px;margin:auto;padding:14px 12px 90px}header{position:sticky;top:0;z-index:5;background:#07111ff4;padding:10px 0 14px;display:flex;align-items:center;gap:10px}h1{font-size:24px;margin:0}.tag{margin-left:auto;color:var(--mint);border:1px solid #66e1bd66;border-radius:99px;padding:5px 8px;font-size:11px}.card{background:linear-gradient(var(--p2),var(--p));border:1px solid var(--line);border-radius:16px;padding:15px;margin:10px 0}.page{display:none}.page.on{display:block}.sub{color:var(--muted);font-size:13px;line-height:1.45}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.homegrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.btn{border:0;border-radius:11px;background:#263c52;color:white;min-height:46px;padding:10px 13px;font-weight:750}.btn.primary{background:var(--blue)}.btn.mint{background:#157c69}.btn.red{background:#773838}.btn.ghost{border:1px solid #385875;background:transparent}.hero{text-align:left;min-height:92px;background:#0b2038;border:1px solid #24507c;border-radius:14px;color:white;padding:13px}.hero b{display:block;font-size:17px;margin:5px 0}.hero small{color:var(--muted)}label{display:block;font-size:12px;color:#c5d6e6;margin:9px 0 4px}.field{width:100%;min-height:45px;background:#071524;color:white;border:1px solid #2b4662;border-radius:10px;padding:10px}.row{display:flex;gap:8px;align-items:center}.grow{flex:1}.wrap{flex-wrap:wrap}.status{background:#091a2b;border-radius:9px;padding:8px 10px;color:#bdd0e0;font-size:12px;margin:8px 0}.warn{border-left:3px solid var(--warn);padding:9px 11px;background:#ffca6310;color:#ffe4a6}.metric{background:#081827;border:1px solid #233c54;border-radius:10px;padding:9px;text-align:center}.metric b{font-size:17px;display:block}.metric small{color:var(--muted)}input[type=file]{display:none}.camera{background:#02080e;border:1px solid var(--line);border-radius:13px;overflow:hidden}.camera canvas{width:100%;height:auto;display:block;max-height:58vh;touch-action:none}.empty{color:var(--muted);text-align:center;padding:24px;border:1px dashed #2b455e;border-radius:12px}.chips{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}.chip{font-size:11px;border:1px solid #2b4b68;border-radius:99px;padding:5px 7px;color:#9eb3c7}.chip.now{color:white;border-color:var(--blue);background:#173f68}.chip.done{color:var(--mint);border-color:#2d7766}.item{background:#081827;border:1px solid #233c54;border-radius:12px;padding:11px;margin:8px 0}.item b{display:block}.item small{color:var(--muted)}nav{position:fixed;bottom:0;left:0;right:0;background:#081525f2;border-top:1px solid var(--line);display:flex;justify-content:center;padding:7px 5px calc(7px + env(safe-area-inset-bottom))}.navin{width:min(760px,100%);display:grid;grid-template-columns:repeat(6,1fr);gap:3px}.nav{background:transparent;border:0;color:#8ba0b5;min-height:50px;border-radius:9px;font-size:10px}.nav.on{color:white;background:#17304b}.hide{display:none!important}@media(max-width:430px){.grid3{grid-template-columns:1fr 1fr}.app{padding-left:9px;padding-right:9px}}
-</style></head><body><div class="app"><header><div><h1>BoxMeasure</h1><div class="sub">Warehouse Intake 1.1.4</div></div><span class="tag">OFFLINE</span></header>
-<section id="home" class="page on"><div class="card"><h2>Fast intake</h2><p class="sub">Photograph a carton with a standard card, mark its edges, add weight and quantity, then send it to the pallet queue.</p><div class="homegrid"><button class="hero" onclick="go('measure')"><b>Measure Box</b><small>Photo + reference card</small></button><button class="hero" onclick="go('intake')"><b>Product Intake</b><small>Barcode, weight, quantity</small></button><button class="hero" onclick="go('queue')"><b>Pallet Queue</b><small><span id="hcq">0</span> queued lines</small></button><button class="hero" onclick="go('history')"><b>History</b><small><span id="hch">0</span> saved intakes</small></button></div></div><div class="card"><b>Current draft</b><div id="draftSummary" class="empty">No active intake.</div></div></section>
-<section id="measure" class="page"><div class="card"><h2>Measure Box</h2><p class="sub">Put a standard bank/ID card on a visible box face. Take the photo as square-on as practical. Then mark the two endpoints for the card edge, length, width and height.</p><div class="row wrap"><label for="photo" class="btn primary grow">Take / choose photo</label><input id="photo" type="file" accept="image/*" capture="environment"><button class="btn ghost" onclick="resetPts()">Reset points</button></div><div id="mstatus" class="status">Choose a photo to begin.</div><div id="chips" class="chips"></div><div class="camera"><div id="camEmpty" class="empty">Photo appears here.</div><canvas id="cv" class="hide"></canvas></div><div class="grid3" style="margin-top:9px"><div class="metric"><b id="ml">—</b><small>Length cm</small></div><div class="metric"><b id="mw">—</b><small>Width cm</small></div><div class="metric"><b id="mh">—</b><small>Height cm</small></div></div><p class="warn">Camera dimensions are estimates. Perspective can distort edges away from the reference-card plane. Verify values before saving.</p><button class="btn primary" style="width:100%" onclick="useMeasure()">Use dimensions</button></div></section>
-<section id="intake" class="page"><div class="card"><h2>Confirm Intake</h2><div class="grid3"><div><label>Length cm</label><input id="len" class="field" inputmode="decimal"></div><div><label>Width cm</label><input id="wid" class="field" inputmode="decimal"></div><div><label>Height cm</label><input id="hei" class="field" inputmode="decimal"></div></div><div class="grid"><div><label>Weight each kg</label><input id="weight" class="field" inputmode="decimal"></div><div><label>Quantity</label><input id="qty" class="field" type="number" min="1" value="1"></div></div><label>Product name</label><input id="product" class="field" placeholder="e.g. Frozen mixed vegetables"><div class="grid"><div><label>SKU</label><input id="sku" class="field"></div><div><label>Barcode</label><input id="barcode" class="field"></div></div><div class="row"><label for="barcodePhoto" class="btn mint grow">Scan barcode photo</label><input id="barcodePhoto" type="file" accept="image/*" capture="environment"></div><div id="bstatus" class="status">Manual barcode entry always works.</div><label>Notes</label><textarea id="notes" class="field" rows="3"></textarea><label><input id="rotate" type="checkbox" checked> Rotation allowed for pallet planning</label><div id="calc" class="status">Enter dimensions.</div><div class="row"><button class="btn primary grow" onclick="save(false)">Save</button><button class="btn mint grow" onclick="save(true)">Save + Queue</button></div></div></section>
-<section id="queue" class="page"><div class="card"><h2>Pallet Queue</h2><div class="grid3"><div class="metric"><b id="qu">0</b><small>Units</small></div><div class="metric"><b id="qw">0</b><small>kg</small></div><div class="metric"><b id="qv">0</b><small>m³</small></div></div><div id="qlist"></div><div class="row wrap"><button class="btn primary grow" onclick="copyExport('json')">Copy JSON</button><button class="btn mint grow" onclick="copyExport('csv')">Copy CSV</button><button class="btn red" onclick="clearQ()">Clear</button></div><div id="exstatus" class="status">Schema: boxmeasure.pallet-input.v1</div></div></section>
-<section id="history" class="page"><div class="card"><h2>History</h2><div id="hist"></div></div></section>
-<section id="settings" class="page"><div class="card"><h2>Calibration</h2><p class="sub">Default standard card long edge: 85.6 mm.</p><label>Reference edge mm</label><input id="ref" class="field" inputmode="decimal" value="85.6"><button class="btn primary" style="width:100%;margin-top:10px" onclick="saveSettings()">Save calibration</button></div><div class="card"><h2>Privacy</h2><p class="sub">Records, queue data and settings remain in this app's local storage. Measurement photos are not saved into records.</p><button class="btn red" onclick="erase()">Erase BoxMeasure data</button></div></section>
-</div><nav><div class="navin"><button class="nav on" data-p="home" onclick="go('home')">HOME</button><button class="nav" data-p="measure" onclick="go('measure')">MEASURE</button><button class="nav" data-p="intake" onclick="go('intake')">INTAKE</button><button class="nav" data-p="queue" onclick="go('queue')">QUEUE</button><button class="nav" data-p="history" onclick="go('history')">HISTORY</button><button class="nav" data-p="settings" onclick="go('settings')">SETTINGS</button></div></nav>
+:root{
+  --bg:#07111f;--panel:#0d1b2c;--panel2:#10243a;--line:#27435f;--text:#edf7ff;
+  --muted:#9db2c8;--blue:#2f8cff;--mint:#66e1bd;--warn:#ffca63;--red:#ff7070;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,input,select,textarea{font:inherit}
+.app{max-width:820px;margin:auto;padding:10px 10px 92px}
+header{position:sticky;top:0;z-index:20;background:#07111ff2;backdrop-filter:blur(8px);padding:9px 2px 12px;display:flex;align-items:center;gap:8px}
+h1{font-size:23px;margin:0} h2{font-size:19px;margin:0 0 8px} h3{font-size:15px;margin:0 0 6px}
+.sub{color:var(--muted);font-size:12px;line-height:1.45}.tag{margin-left:auto;border:1px solid #66e1bd66;color:var(--mint);border-radius:99px;padding:5px 8px;font-size:10px;font-weight:800}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:15px;padding:13px;margin:9px 0}
+.page{display:none}.page.on{display:block}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.row{display:flex;align-items:center;gap:8px}.wrap{flex-wrap:wrap}.grow{flex:1}
+.btn{border:0;border-radius:10px;background:#263c52;color:#fff;min-height:44px;padding:9px 12px;font-weight:800}
+.btn.primary{background:var(--blue)}.btn.mint{background:#157c69}.btn.red{background:#783838}.btn.ghost{background:transparent;border:1px solid #3a5c78}
+.btn.small{min-height:34px;padding:6px 9px;font-size:12px}
+.field{width:100%;min-height:43px;background:#061522;color:#fff;border:1px solid #2d4a64;border-radius:9px;padding:9px}
+textarea.field{resize:vertical}
+label{display:block;color:#c8d8e6;font-size:11px;margin:8px 0 4px}
+.metric{background:#081827;border:1px solid #233c54;border-radius:10px;padding:9px;text-align:center}
+.metric b{display:block;font-size:18px}.metric small{color:var(--muted);font-size:10px}
+.zone{min-height:110px;text-align:left;border:1px solid #285175;background:#0a2037;border-radius:14px;color:white;padding:12px}
+.zone b{font-size:20px;display:block;margin-bottom:5px}.zone .big{font-size:28px;font-weight:900;line-height:1}.zone small{color:var(--muted)}
+.progress{height:7px;border-radius:99px;background:#071421;overflow:hidden;margin-top:9px}.progress>span{display:block;height:100%;background:var(--mint)}
+.status{background:#081827;border-radius:9px;padding:8px 10px;color:#bed0e0;font-size:12px;margin:8px 0}
+.warn{border-left:3px solid var(--warn);padding:9px 10px;background:#ffca6310;color:#ffe2a0;font-size:12px}
+.ok{border-left:3px solid var(--mint);padding:9px 10px;background:#66e1bd10;color:#bdf6e5;font-size:12px}
+.item{background:#081827;border:1px solid #233c54;border-radius:11px;padding:10px;margin:7px 0}
+.item.selected{border-color:var(--blue);box-shadow:0 0 0 1px #2f8cff55 inset}
+.itemtop{display:flex;gap:7px;align-items:flex-start}.itemtitle{font-weight:850;line-height:1.25}.itemmeta{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.35}
+.pill{display:inline-block;border:1px solid #31516e;border-radius:99px;padding:3px 7px;font-size:10px;color:#bdd0e0;margin:2px 3px 2px 0}.pill.done{border-color:#2f806c;color:var(--mint)}.pill.partial{border-color:#876b2e;color:var(--warn)}.pill.bad{border-color:#7e3a3a;color:#ffaaaa}
+.empty{padding:24px 12px;border:1px dashed #31516e;border-radius:11px;text-align:center;color:var(--muted)}
+.tabs{display:flex;gap:6px;overflow:auto;padding-bottom:3px}.tab{white-space:nowrap;background:#10243a;border:1px solid #2b4964;color:#b9cad9;padding:8px 10px;border-radius:99px;font-weight:750}.tab.on{background:#17426a;color:white;border-color:#367bb7}
+input[type=file]{display:none}
+.camera{background:#02080e;border:1px solid var(--line);border-radius:12px;overflow:hidden}.camera canvas{width:100%;height:auto;display:block;max-height:58vh;touch-action:none}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0}.chip{font-size:10px;border:1px solid #2b4b68;border-radius:99px;padding:4px 7px;color:#9eb3c7}.chip.now{color:white;border-color:var(--blue);background:#173f68}.chip.done{color:var(--mint);border-color:#2d7766}
+.mapping{display:grid;grid-template-columns:1fr 1fr;gap:7px}.mapping>div{min-width:0}
+.stickyActions{position:sticky;bottom:66px;z-index:8;background:#07111fe8;border:1px solid #28465f;border-radius:12px;padding:7px;margin-top:10px}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:30;background:#081525f4;border-top:1px solid var(--line);display:flex;justify-content:center;padding:5px 4px calc(5px + env(safe-area-inset-bottom))}
+.navin{width:min(820px,100%);display:grid;grid-template-columns:repeat(5,1fr);gap:3px}.nav{background:transparent;border:0;color:#8ba0b5;min-height:50px;border-radius:9px;font-size:9px;font-weight:800}.nav.on{color:white;background:#17304b}
+.hide{display:none!important}
+@media(max-width:520px){.grid3{grid-template-columns:1fr 1fr}.mapping{grid-template-columns:1fr}.app{padding-left:8px;padding-right:8px}.zone b{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div><h1>BoxMeasure</h1><div class="sub">Warehouse Measurement Queue 1.2.0</div></div>
+  <span class="tag">LOCAL</span>
+</header>
+
+<section id="dashboard" class="page on">
+  <div class="card">
+    <h2>Measurement progress</h2>
+    <div class="sub">Work one storage area at a time. A line is complete when dimensions and weight are recorded.</div>
+    <div class="grid3" style="margin-top:10px">
+      <button class="zone" onclick="openZone('Dry')"><b>DRY</b><span class="big" id="dryDone">0/0</span><small> measured</small><div class="progress"><span id="dryBar" style="width:0%"></span></div></button>
+      <button class="zone" onclick="openZone('Chiller')"><b>CHILLER</b><span class="big" id="chillerDone">0/0</span><small> measured</small><div class="progress"><span id="chillerBar" style="width:0%"></span></div></button>
+      <button class="zone" onclick="openZone('Frozen')"><b>FROZEN</b><span class="big" id="frozenDone">0/0</span><small> measured</small><div class="progress"><span id="frozenBar" style="width:0%"></span></div></button>
+    </div>
+  </div>
+  <div class="grid3">
+    <div class="metric"><b id="allDone">0/0</b><small>complete</small></div>
+    <div class="metric"><b id="partialCount">0</b><small>partial</small></div>
+    <div class="metric"><b id="unassignedCount">0</b><small>needs area/type</small></div>
+  </div>
+  <div class="card">
+    <h2>Start work</h2>
+    <div class="grid2">
+      <button class="btn primary" onclick="newItem()">+ Add product</button>
+      <button class="btn mint" onclick="go('import')">Import inventory CSV</button>
+      <button class="btn" onclick="go('work')">Open work queue</button>
+      <button class="btn" onclick="go('export')">Export measurements</button>
+    </div>
+    <div id="resumeCard" class="status">No active draft.</div>
+  </div>
+</section>
+
+<section id="work" class="page">
+  <div class="card">
+    <div class="row"><div class="grow"><h2>Work queue</h2><div id="queueSummary" class="sub"></div></div><button class="btn small primary" onclick="newItem()">+ ITEM</button></div>
+    <div class="tabs" style="margin-top:8px">
+      <button class="tab on" data-zone="All" onclick="setZoneFilter('All')">ALL</button>
+      <button class="tab" data-zone="Dry" onclick="setZoneFilter('Dry')">DRY</button>
+      <button class="tab" data-zone="Chiller" onclick="setZoneFilter('Chiller')">CHILLER</button>
+      <button class="tab" data-zone="Frozen" onclick="setZoneFilter('Frozen')">FROZEN</button>
+      <button class="tab" data-zone="Unassigned" onclick="setZoneFilter('Unassigned')">NEEDS CLASSIFYING</button>
+    </div>
+    <div class="grid2" style="margin-top:8px">
+      <input id="search" class="field" placeholder="Search SKU, barcode, description" oninput="renderQueue()">
+      <select id="statusFilter" class="field" onchange="renderQueue()">
+        <option value="outstanding">Outstanding first</option>
+        <option value="unmeasured">Not measured</option>
+        <option value="partial">Partial</option>
+        <option value="complete">Complete</option>
+        <option value="all">All</option>
+      </select>
+    </div>
+    <div id="queueList"></div>
+  </div>
+</section>
+
+<section id="item" class="page">
+  <div class="card">
+    <div class="row"><div class="grow"><h2 id="itemHeading">Product measurement</h2><div id="itemStatus" class="sub"></div></div><button class="btn small ghost" onclick="go('work')">QUEUE</button></div>
+    <div class="grid2">
+      <div><label>Storage area *</label><select id="zone" class="field" onchange="draftChanged()"><option value="">Choose…</option><option>Dry</option><option>Chiller</option><option>Frozen</option></select></div>
+      <div><label>System type *</label><select id="packType" class="field" onchange="draftChanged()"><option value="">Choose…</option><option>Box</option><option>Unit Qty</option></select></div>
+    </div>
+    <div id="measureHint" class="status">Choose Box or Unit Qty.</div>
+    <label>Description</label><input id="description" class="field" oninput="draftChanged()" placeholder="Product description">
+    <div class="grid2">
+      <div><label>SKU / product code</label><input id="sku" class="field" oninput="draftChanged()"></div>
+      <div><label>Barcode</label><input id="barcode" class="field" inputmode="numeric" oninput="draftChanged()"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <label for="barcodePhoto" class="btn mint grow" style="margin:0">Scan barcode photo</label>
+      <input id="barcodePhoto" type="file" accept="image/*" capture="environment">
+      <button class="btn ghost" onclick="findBarcodeMatch()">Find match</button>
+    </div>
+    <div id="barcodeStatus" class="status">Barcode can always be entered manually.</div>
+
+    <h3 style="margin-top:14px">Dimensions</h3>
+    <div class="grid3">
+      <div><label>Length cm *</label><input id="length" class="field" inputmode="decimal" oninput="draftChanged()"></div>
+      <div><label>Width cm *</label><input id="width" class="field" inputmode="decimal" oninput="draftChanged()"></div>
+      <div><label>Height cm *</label><input id="height" class="field" inputmode="decimal" oninput="draftChanged()"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Weight each kg *</label><input id="weight" class="field" inputmode="decimal" oninput="draftChanged()"></div>
+      <div><label>Quantity / pack count (optional)</label><input id="quantity" class="field" inputmode="numeric" oninput="draftChanged()" placeholder="1"></div>
+    </div>
+    <div id="calc" class="status">Enter dimensions and weight.</div>
+    <button class="btn primary" style="width:100%;margin-top:5px" onclick="startMeasure()">CAMERA MEASURE</button>
+
+    <div class="grid2">
+      <div><label>Measurement method</label><select id="method" class="field" onchange="draftChanged()"><option value="manual">Manual verified</option><option value="camera-card">Camera + reference card</option><option value="tape">Tape measure</option><option value="other">Other</option></select></div>
+      <div><label>Confidence</label><select id="confidence" class="field" onchange="draftChanged()"><option>Verified</option><option>High</option><option>Medium</option><option>Low</option></select></div>
+    </div>
+    <label>Notes</label><textarea id="notes" class="field" rows="2" oninput="draftChanged()"></textarea>
+
+    <div class="stickyActions row">
+      <button class="btn ghost" onclick="saveCurrent(false)">SAVE</button>
+      <button class="btn primary grow" onclick="saveCurrent(true)">SAVE & NEXT</button>
+    </div>
+  </div>
+</section>
+
+<section id="measure" class="page">
+  <div class="card">
+    <div class="row"><div class="grow"><h2>Camera measure</h2><div class="sub">Reference card → length → width → height.</div></div><button class="btn small ghost" onclick="go('item')">BACK</button></div>
+    <p class="warn">Use a standard bank/ID card on the same visible plane as the box edge when possible. Camera measurement is an estimate; verify before saving.</p>
+    <div class="row wrap">
+      <label for="photo" class="btn primary grow" style="margin:0">Take / choose photo</label>
+      <input id="photo" type="file" accept="image/*" capture="environment">
+      <button class="btn ghost" onclick="resetMeasure()">Reset points</button>
+    </div>
+    <div id="measureStatus" class="status">Choose a photo.</div>
+    <div id="measureChips" class="chips"></div>
+    <div class="camera"><div id="cameraEmpty" class="empty">Photo appears here.</div><canvas id="canvas" class="hide"></canvas></div>
+    <div class="grid3" style="margin-top:8px">
+      <div class="metric"><b id="mLength">—</b><small>length cm</small></div>
+      <div class="metric"><b id="mWidth">—</b><small>width cm</small></div>
+      <div class="metric"><b id="mHeight">—</b><small>height cm</small></div>
+    </div>
+    <button class="btn mint" style="width:100%;margin-top:8px" onclick="applyMeasure()">USE THESE DIMENSIONS</button>
+  </div>
+</section>
+
+<section id="import" class="page">
+  <div class="card">
+    <h2>Import inventory</h2>
+    <div class="sub">CSV is supported now. The original columns and row order are preserved so measurements can be exported back beside the source data.</div>
+    <label for="inventoryFile" class="btn primary" style="display:block;text-align:center;margin-top:10px">Choose CSV file</label>
+    <input id="inventoryFile" type="file" accept=".csv,text/csv,text/plain">
+    <div id="importStatus" class="status">No file loaded.</div>
+    <div id="mappingBox" class="hide">
+      <h3>Map columns</h3>
+      <div class="mapping">
+        <div><label>Source ID / line number</label><select id="mapId" class="field"></select></div>
+        <div><label>SKU / product code</label><select id="mapSku" class="field"></select></div>
+        <div><label>Barcode</label><select id="mapBarcode" class="field"></select></div>
+        <div><label>Description</label><select id="mapDescription" class="field"></select></div>
+        <div><label>Dry / Chiller / Frozen</label><select id="mapZone" class="field"></select></div>
+        <div><label>Box / Unit Qty</label><select id="mapPack" class="field"></select></div>
+      </div>
+      <div class="grid2">
+        <div><label>Default area if blank/unmapped</label><select id="defaultZone" class="field"><option value="">Leave unassigned</option><option>Dry</option><option>Chiller</option><option>Frozen</option></select></div>
+        <div><label>Default type if blank/unmapped</label><select id="defaultPack" class="field"><option value="">Leave unassigned</option><option>Box</option><option>Unit Qty</option></select></div>
+      </div>
+      <div id="sampleRows" class="status"></div>
+      <button class="btn mint" style="width:100%" onclick="commitImport()">IMPORT INTO WORK QUEUE</button>
+    </div>
+  </div>
+</section>
+
+<section id="export" class="page">
+  <div class="card">
+    <h2>Transfer & backup</h2>
+    <div class="grid3">
+      <div class="metric"><b id="exportComplete">0</b><small>complete</small></div>
+      <div class="metric"><b id="exportOutstanding">0</b><small>outstanding</small></div>
+      <div class="metric"><b id="exportChanged">0</b><small>since checkpoint</small></div>
+    </div>
+    <p class="sub">Imported source columns are exported first and unchanged. BoxMeasure adds standardized <b>BM_</b> columns for the measurements.</p>
+    <div class="grid2">
+      <button class="btn primary" onclick="exportMaster()">MASTER CSV</button>
+      <button class="btn mint" onclick="exportCompleteOnly()">MEASURED CSV</button>
+      <button class="btn" onclick="exportCheckpoint()">CHECKPOINT CSV</button>
+      <button class="btn" onclick="exportBackup()">JSON BACKUP</button>
+    </div>
+    <div id="exportStatus" class="status">Nothing exported this session.</div>
+  </div>
+  <div class="card">
+    <h2>Target-system readiness</h2>
+    <div class="sub">When the new system's import template is available, its column names can be mapped onto the stable BoxMeasure fields without re-measuring anything.</div>
+    <div class="status">Stable fields: BM_Zone, BM_PackType, BM_LengthCm, BM_WidthCm, BM_HeightCm, BM_WeightKg, BM_Status, BM_Method, BM_Confidence, BM_MeasuredAt.</div>
+  </div>
+</section>
+
+<section id="settings" class="page">
+  <div class="card">
+    <h2>Measurement settings</h2>
+    <label>Reference card edge mm</label><input id="refMm" class="field" inputmode="decimal" value="85.6">
+    <button class="btn primary" style="width:100%;margin-top:8px" onclick="saveSettings()">SAVE SETTINGS</button>
+  </div>
+  <div class="card">
+    <h2>Data safety</h2>
+    <div class="sub">Everything is stored on this device. Export a JSON backup before uninstalling or moving to another phone.</div>
+    <div id="storageInfo" class="status"></div>
+    <button class="btn red" onclick="eraseAll()">ERASE ALL BOXMEASURE DATA</button>
+  </div>
+</section>
+</div>
+
+<nav><div class="navin">
+  <button class="nav on" data-page="dashboard" onclick="go('dashboard')">DASHBOARD</button>
+  <button class="nav" data-page="work" onclick="go('work')">WORK QUEUE</button>
+  <button class="nav" data-page="item" onclick="openActiveItem()">MEASURE</button>
+  <button class="nav" data-page="export" onclick="go('export')">EXPORT</button>
+  <button class="nav" data-page="settings" onclick="go('settings')">SETTINGS</button>
+</div></nav>
+
 <script>
-const $=id=>document.getElementById(id),num=v=>Number(String(v||'').replace(',','.'))||0,esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const K={r:'bm.records.114',q:'bm.queue.114',s:'bm.settings.114'};let records=JSON.parse(localStorage.getItem(K.r)||'[]'),queue=JSON.parse(localStorage.getItem(K.q)||'[]'),settings=JSON.parse(localStorage.getItem(K.s)||'{"ref":85.6}');let draft={},img=null,pts=[];const segs=['Reference','Length','Width','Height'];
-function go(id){document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id===id));document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('on',x.dataset.p===id));if(id==='queue')renderQ();if(id==='history')renderH();if(id==='intake')fillDraft();window.scrollTo(0,0)}
-function persist(){localStorage.setItem(K.r,JSON.stringify(records));localStorage.setItem(K.q,JSON.stringify(queue));renderHeads()}
-function renderHeads(){$('hcq').textContent=queue.length;$('hch').textContent=records.length;const d=draft;$('draftSummary').className=(d.length||d.product)?'item':'empty';$('draftSummary').innerHTML=(d.length||d.product)?`<b>${esc(d.product||'Current carton')}</b><small>${d.length||'—'} × ${d.width||'—'} × ${d.height||'—'} cm · ${d.weight||0} kg</small>`:'No active intake.'}
-function fillDraft(){[['len','length'],['wid','width'],['hei','height'],['weight','weight'],['qty','qty'],['product','product'],['sku','sku'],['barcode','barcode'],['notes','notes']].forEach(([id,k])=>{$(id).value=draft[k]??(k==='qty'?1:'')});$('rotate').checked=draft.rotate!==false;calc()}
-['len','wid','hei','weight','qty'].forEach(id=>$(id).addEventListener('input',calc));function calc(){const l=num($('len').value),w=num($('wid').value),h=num($('hei').value),kg=num($('weight').value),q=Math.max(1,num($('qty').value));$('calc').textContent=l&&w&&h?`Volume ${(l*w*h/1e6).toFixed(4)} m³ each · ${(kg*q).toFixed(2)} kg total`:'Enter dimensions.'}
-function save(addQ){const l=num($('len').value),w=num($('wid').value),h=num($('hei').value);if(!(l&&w&&h)){alert('Enter length, width and height.');return}const dims=[l,w,h].sort((a,b)=>b-a),r={id:'bm_'+Date.now(),created:new Date().toISOString(),length:l,width:w,height:h,normalized:{longestCm:dims[0],middleCm:dims[1],shortestCm:dims[2]},weight:num($('weight').value),qty:Math.max(1,num($('qty').value)),product:$('product').value.trim(),sku:$('sku').value.trim(),barcode:$('barcode').value.trim(),notes:$('notes').value.trim(),rotate:$('rotate').checked,method:draft.method||'manual',confidence:draft.confidence||'User verified',volumeM3:+(l*w*h/1e6).toFixed(6)};records.unshift(r);if(addQ)queue.push({recordId:r.id,qty:r.qty});draft={};persist();renderH();renderQ();go(addQ?'queue':'history')}
-function renderH(){if(!records.length){$('hist').innerHTML='<div class="empty">No saved intakes.</div>';return}$('hist').innerHTML=records.map(r=>`<div class="item"><b>${esc(r.product||r.sku||r.barcode||'Carton')}</b><small>${r.length} × ${r.width} × ${r.height} cm · ${r.weight||0} kg · ${new Date(r.created).toLocaleString()}</small><div class="row" style="margin-top:8px"><button class="btn grow" onclick="reuse('${r.id}')">Reuse</button><button class="btn mint grow" onclick="addQ('${r.id}')">Queue</button><button class="btn red" onclick="delR('${r.id}')">Delete</button></div></div>`).join('')}
-function reuse(id){const r=records.find(x=>x.id===id);if(!r)return;draft={...r};go('intake')}function addQ(id){const r=records.find(x=>x.id===id);if(!r)return;let q=queue.find(x=>x.recordId===id);if(q)q.qty+=r.qty||1;else queue.push({recordId:id,qty:r.qty||1});persist();go('queue')}function delR(id){records=records.filter(x=>x.id!==id);queue=queue.filter(x=>x.recordId!==id);persist();renderH()}
-function renderQ(){const valid=queue.filter(q=>records.some(r=>r.id===q.recordId));if(valid.length!==queue.length){queue=valid;persist()}let units=0,kg=0,vol=0;$('qlist').innerHTML=queue.length?queue.map(q=>{const r=records.find(x=>x.id===q.recordId);units+=q.qty;kg+=(r.weight||0)*q.qty;vol+=(r.volumeM3||0)*q.qty;return `<div class="item"><b>${esc(r.product||r.sku||r.barcode||'Carton')}</b><small>${r.length} × ${r.width} × ${r.height} cm · ${r.weight||0} kg</small><div class="row" style="margin-top:8px"><button class="btn" onclick="qchg('${q.recordId}',-1)">−</button><b>Qty ${q.qty}</b><button class="btn" onclick="qchg('${q.recordId}',1)">+</button><button class="btn red" style="margin-left:auto" onclick="qremove('${q.recordId}')">Remove</button></div></div>`}).join(''):'<div class="empty">Queue is empty.</div>';$('qu').textContent=units;$('qw').textContent=kg.toFixed(2);$('qv').textContent=vol.toFixed(3)}
-function qchg(id,d){const q=queue.find(x=>x.recordId===id);if(q)q.qty=Math.max(1,q.qty+d);persist();renderQ()}function qremove(id){queue=queue.filter(x=>x.recordId!==id);persist();renderQ()}function clearQ(){if(queue.length&&confirm('Clear pallet queue?')){queue=[];persist();renderQ()}}
-function payload(){return{schema:'boxmeasure.pallet-input.v1',version:1,exportedAt:new Date().toISOString(),units:{dimensions:'cm',weight:'kg'},items:queue.map(q=>{const r=records.find(x=>x.id===q.recordId);return{recordId:r.id,barcode:r.barcode,sku:r.sku,productName:r.product,quantity:q.qty,dimensions:{length:r.length,width:r.width,height:r.height},normalizedDimensions:r.normalized,weightEachKg:r.weight,totalWeightKg:+(r.weight*q.qty).toFixed(3),volumeEachM3:r.volumeM3,rotationAllowed:r.rotate,measurementMethod:r.method,confidence:r.confidence,notes:r.notes}})}}
-function csv(){const rows=[['recordId','barcode','sku','productName','quantity','lengthCm','widthCm','heightCm','weightEachKg','totalWeightKg']];payload().items.forEach(i=>rows.push([i.recordId,i.barcode,i.sku,i.productName,i.quantity,i.dimensions.length,i.dimensions.width,i.dimensions.height,i.weightEachKg,i.totalWeightKg]));return rows.map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n')}
-async function copyExport(k){if(!queue.length){$('exstatus').textContent='Queue is empty.';return}const t=k==='json'?JSON.stringify(payload(),null,2):csv();try{await navigator.clipboard.writeText(t);$('exstatus').textContent=k.toUpperCase()+' copied to clipboard.'}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();$('exstatus').textContent=k.toUpperCase()+' copied.'}}
-const cv=$('cv'),ctx=cv.getContext('2d');function resetPts(){pts=[];if(img){draw();step()}else{$('cv').classList.add('hide');$('camEmpty').classList.remove('hide');$('mstatus').textContent='Choose a photo to begin.'}}
-$('photo').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{const im=new Image();im.onload=()=>{img=im;pts=[];const max=Math.min(720,innerWidth-32),s=Math.min(1,max/im.naturalWidth);cv.width=Math.round(im.naturalWidth*s);cv.height=Math.round(im.naturalHeight*s);cv.classList.remove('hide');$('camEmpty').classList.add('hide');draw();step()};im.src=rd.result};rd.readAsDataURL(f);e.target.value=''})
-function dist(a,b){return Math.hypot(b.x-a.x,b.y-a.y)}function step(){const n=Math.floor(pts.length/2);$('chips').innerHTML=segs.map((s,i)=>`<span class="chip ${i<n?'done':i===n?'now':''}">${i<n?'✓ ':''}${s}</span>`).join('');$('mstatus').textContent=pts.length>=8?'All four segments marked. Review estimates.':`Tap ${pts.length%2?'second':'first'} endpoint of ${segs[Math.min(n,3)]}.`}
-function draw(){if(!img)return;ctx.drawImage(img,0,0,cv.width,cv.height);const cs=['#66e1bd','#2f8cff','#ffca63','#ff7f9d'];for(let i=0;i<4;i++){const a=pts[i*2],b=pts[i*2+1];if(a){ctx.fillStyle=cs[i];ctx.beginPath();ctx.arc(a.x,a.y,6,0,7);ctx.fill()}if(a&&b){ctx.strokeStyle=cs[i];ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}measureCalc()}
-cv.addEventListener('pointerdown',e=>{if(!img||pts.length>=8)return;const r=cv.getBoundingClientRect();pts.push({x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height});draw();step()});function measureCalc(){if(pts.length<2)return;const rp=dist(pts[0],pts[1]);if(rp<2)return;const scale=(settings.ref||85.6)/rp/10;const out=[];for(let i=1;i<4;i++)if(pts.length>=i*2+2)out[i]=dist(pts[i*2],pts[i*2+1])*scale;$('ml').textContent=out[1]?out[1].toFixed(1):'—';$('mw').textContent=out[2]?out[2].toFixed(1):'—';$('mh').textContent=out[3]?out[3].toFixed(1):'—'}
-function useMeasure(){if(pts.length<8){alert('Mark reference, length, width and height first.');return}const rp=dist(pts[0],pts[1]),scale=(settings.ref||85.6)/rp/10,vals=[1,2,3].map(i=>+(dist(pts[i*2],pts[i*2+1])*scale).toFixed(1));draft={...draft,length:vals[0],width:vals[1],height:vals[2],method:'camera-reference',confidence:rp>120?'High':rp>60?'Medium':'Low'};go('intake')}
-$('barcodePhoto').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;$('bstatus').textContent='Reading barcode…';try{if(!window.BarcodeDetector)throw 0;const d=new BarcodeDetector();const b=await createImageBitmap(f),hits=await d.detect(b);b.close();if(hits.length){$('barcode').value=hits[0].rawValue;$('bstatus').textContent='Detected: '+hits[0].rawValue}else $('bstatus').textContent='No barcode found. Try again or enter manually.'}catch(x){$('bstatus').textContent='Automatic recognition unavailable here. Manual entry is ready.'}e.target.value=''})
-function saveSettings(){settings.ref=num($('ref').value)||85.6;localStorage.setItem(K.s,JSON.stringify(settings));alert('Calibration saved.')}function erase(){if(confirm('Erase all BoxMeasure data?')){Object.values(K).forEach(k=>localStorage.removeItem(k));records=[];queue=[];settings={ref:85.6};draft={};$('ref').value=85.6;persist();renderH();renderQ();renderHeads();go('home')}}
-$('ref').value=settings.ref||85.6;renderHeads();renderH();renderQ();
-</script></body></html>
+const $=id=>document.getElementById(id);
+const num=v=>Number(String(v??'').trim().replace(',','.'))||0;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>`bm_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+const KEYS={items:'bm.items.120',settings:'bm.settings.120',draft:'bm.draft.120',checkpoint:'bm.checkpoint.120'};
+let settings=JSON.parse(localStorage.getItem(KEYS.settings)||'{"refMm":85.6}');
+let items=JSON.parse(localStorage.getItem(KEYS.items)||'[]');
+let draft=JSON.parse(localStorage.getItem(KEYS.draft)||'null');
+let zoneFilter='All',currentZone='Dry',importRows=[],importHeaders=[];
+let measureImage=null,measurePoints=[],measureResult={};
+const segments=['Reference','Length','Width','Height'];
+
+function normalizeZone(v){
+  const s=String(v||'').trim().toLowerCase();
+  if(s.includes('dry')||s==='ambient') return 'Dry';
+  if(s.includes('chill')||s.includes('cool')||s.includes('fridge')) return 'Chiller';
+  if(s.includes('froz')||s.includes('freezer')) return 'Frozen';
+  return '';
+}
+function normalizePack(v){
+  const s=String(v||'').trim().toLowerCase().replace(/\s+/g,' ');
+  if(s==='box'||s.includes('carton')||s.includes('case')) return 'Box';
+  if(s.includes('unit')) return 'Unit Qty';
+  return '';
+}
+function statusOf(it){
+  const dims=num(it.length)>0&&num(it.width)>0&&num(it.height)>0;
+  const wt=num(it.weight)>0;
+  if(dims&&wt&&it.zone&&it.packType) return 'complete';
+  if(dims||wt||it.zone||it.packType||it.sku||it.barcode||it.description) return 'partial';
+  return 'unmeasured';
+}
+function persist(){
+  localStorage.setItem(KEYS.items,JSON.stringify(items));
+  if(draft)localStorage.setItem(KEYS.draft,JSON.stringify(draft));else localStorage.removeItem(KEYS.draft);
+  renderDashboard(); renderExportStats();
+}
+function migrateOld(){
+  if(items.length) return;
+  try{
+    const old=JSON.parse(localStorage.getItem('bm.records.114')||'[]');
+    if(!old.length)return;
+    items=old.map((r,i)=>({
+      id:r.id||uid(),sourceIndex:i+1,sourceRow:{},sourceId:'',sku:r.sku||'',barcode:r.barcode||'',description:r.product||'',
+      zone:'',packType:'',length:r.length||'',width:r.width||'',height:r.height||'',weight:r.weight||'',quantity:r.qty||'',
+      method:r.method||'manual',confidence:r.confidence||'Verified',notes:r.notes||'',createdAt:r.created||new Date().toISOString(),
+      updatedAt:r.created||new Date().toISOString(),measuredAt:r.created||''
+    }));
+    persist();
+  }catch(e){}
+}
+
+function go(id){
+  document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id===id));
+  document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('on',x.dataset.page===id));
+  if(id==='work')renderQueue();
+  if(id==='export')renderExportStats();
+  if(id==='settings')renderSettings();
+  if(id==='item')fillItem();
+  window.scrollTo(0,0);
+}
+function counts(zone){
+  const a=items.filter(x=>x.zone===zone),done=a.filter(x=>statusOf(x)==='complete').length;
+  return {total:a.length,done};
+}
+function renderDashboard(){
+  for(const z of ['Dry','Chiller','Frozen']){
+    const c=counts(z),key=z.toLowerCase();
+    $(key+'Done').textContent=`${c.done}/${c.total}`;
+    $(key+'Bar').style.width=(c.total?Math.round(c.done/c.total*100):0)+'%';
+  }
+  const complete=items.filter(x=>statusOf(x)==='complete').length;
+  $('allDone').textContent=`${complete}/${items.length}`;
+  $('partialCount').textContent=items.filter(x=>statusOf(x)==='partial').length;
+  $('unassignedCount').textContent=items.filter(x=>!x.zone||!x.packType).length;
+  $('resumeCard').innerHTML=draft?`<b>${esc(draft.description||draft.sku||draft.barcode||'Current draft')}</b><br><span class="sub">${esc(draft.zone||'No area')} · ${esc(draft.packType||'No type')} · autosaved</span> <button class="btn small primary" onclick="go('item')">RESUME</button>`:'No active draft.';
+}
+function openZone(z){currentZone=z;zoneFilter=z;setZoneFilter(z);go('work')}
+function setZoneFilter(z){
+  zoneFilter=z;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.zone===z));
+  renderQueue();
+}
+function queueFiltered(){
+  const q=$('search')?$('search').value.trim().toLowerCase():'';
+  const sf=$('statusFilter')?$('statusFilter').value:'outstanding';
+  let a=items.filter(it=>{
+    const z=zoneFilter==='All'||(zoneFilter==='Unassigned'?(!it.zone||!it.packType):it.zone===zoneFilter);
+    const text=[it.sourceId,it.sku,it.barcode,it.description].join(' ').toLowerCase();
+    const s=statusOf(it);
+    const st=sf==='all'||(sf==='outstanding'?s!=='complete':s===sf);
+    return z&&st&&(!q||text.includes(q));
+  });
+  a.sort((a,b)=>{
+    if(sf==='outstanding'){
+      const rank={unmeasured:0,partial:1,complete:2};
+      const d=rank[statusOf(a)]-rank[statusOf(b)]; if(d)return d;
+    }
+    return (a.sourceIndex||999999)-(b.sourceIndex||999999);
+  });
+  return a;
+}
+function renderQueue(){
+  const a=queueFiltered();
+  const complete=items.filter(x=>statusOf(x)==='complete').length;
+  $('queueSummary').textContent=`${a.length} shown · ${complete}/${items.length} complete`;
+  $('queueList').innerHTML=a.length?a.map(it=>{
+    const s=statusOf(it),pill=s==='complete'?'done':s==='partial'?'partial':'bad';
+    return `<div class="item" onclick="editItem('${it.id}')"><div class="itemtop"><div class="grow"><div class="itemtitle">${esc(it.description||it.sku||it.barcode||`Line ${it.sourceIndex||''}`)}</div><div class="itemmeta">${esc(it.sku||'No SKU')} · ${esc(it.barcode||'No barcode')} · ${it.length||'—'} × ${it.width||'—'} × ${it.height||'—'} cm · ${it.weight||'—'} kg</div></div><span class="pill ${pill}">${s.toUpperCase()}</span></div><div style="margin-top:5px"><span class="pill">${esc(it.zone||'NO AREA')}</span><span class="pill">${esc(it.packType||'NO TYPE')}</span>${it.sourceIndex?`<span class="pill">LINE ${it.sourceIndex}</span>`:''}</div></div>`;
+  }).join(''):'<div class="empty">No products match this queue.</div>';
+}
+function newItem(){
+  draft={id:uid(),sourceIndex:items.length+1,sourceRow:{},sourceId:'',sku:'',barcode:'',description:'',zone:currentZone||'',packType:'',length:'',width:'',height:'',weight:'',quantity:'',method:'manual',confidence:'Verified',notes:'',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),measuredAt:''};
+  persist();go('item');
+}
+function editItem(id){const it=items.find(x=>x.id===id);if(!it)return;draft=JSON.parse(JSON.stringify(it));currentZone=it.zone||currentZone;persist();go('item')}
+function openActiveItem(){if(!draft)newItem();else go('item')}
+function fillItem(){
+  if(!draft){$('itemHeading').textContent='No active item';return}
+  const map={zone:'zone',packType:'packType',description:'description',sku:'sku',barcode:'barcode',length:'length',width:'width',height:'height',weight:'weight',quantity:'quantity',method:'method',confidence:'confidence',notes:'notes'};
+  Object.entries(map).forEach(([k,id])=>{$(id).value=draft[k]??''});
+  $('itemHeading').textContent=draft.description||draft.sku||draft.barcode||'Product measurement';
+  $('itemStatus').textContent=`${draft.sourceIndex?'Source line '+draft.sourceIndex+' · ':''}${statusOf(draft).toUpperCase()}`;
+  updateItemCalc(); updateMeasureHint();
+}
+function draftChanged(){
+  if(!draft)return;
+  ['zone','packType','description','sku','barcode','length','width','height','weight','quantity','method','confidence','notes'].forEach(k=>draft[k]=$(k).value);
+  draft.updatedAt=new Date().toISOString();
+  localStorage.setItem(KEYS.draft,JSON.stringify(draft));
+  updateItemCalc();updateMeasureHint();renderDashboard();
+}
+function updateMeasureHint(){
+  if(!$('packType'))return;
+  const p=$('packType').value;
+  $('measureHint').textContent=p==='Box'?'Measure the outer carton and its gross/each carton weight.':p==='Unit Qty'?'Measure the individual unit that the system stores as Unit Qty.':'Choose Box or Unit Qty so the app knows what physical object you are measuring.';
+}
+function updateItemCalc(){
+  if(!$('length'))return;
+  const l=num($('length').value),w=num($('width').value),h=num($('height').value),kg=num($('weight').value);
+  $('calc').textContent=l&&w&&h?`Volume ${(l*w*h/1e6).toFixed(4)} m³ · ${kg?kg.toFixed(3)+' kg each':'weight still required'}`:'Dimensions still required.';
+}
+function saveCurrent(next){
+  if(!draft)return;
+  draftChanged();
+  const now=new Date().toISOString(),s=statusOf(draft);
+  if(s==='complete'&&!draft.measuredAt)draft.measuredAt=now;
+  draft.updatedAt=now;
+  const ix=items.findIndex(x=>x.id===draft.id);
+  if(ix>=0)items[ix]=JSON.parse(JSON.stringify(draft));else items.push(JSON.parse(JSON.stringify(draft)));
+  const saved=JSON.parse(JSON.stringify(draft));
+  draft=null;persist();
+  if(next){
+    currentZone=saved.zone||currentZone;
+    const candidates=items.filter(x=>x.id!==saved.id && statusOf(x)!=='complete' && (!currentZone||x.zone===currentZone)).sort((a,b)=>(a.sourceIndex||999999)-(b.sourceIndex||999999));
+    if(candidates.length){draft=JSON.parse(JSON.stringify(candidates[0]));persist();go('item')}
+    else {zoneFilter=currentZone||'All';go('work');alert(`Saved. No more outstanding ${currentZone||''} lines in the current queue.`)}
+  }else{zoneFilter=saved.zone||zoneFilter;go('work')}
+}
+function findBarcodeMatch(){
+  const code=$('barcode').value.trim();if(!code){$('barcodeStatus').textContent='Enter or scan a barcode first.';return}
+  const hit=items.find(x=>x.barcode===code&&(!draft||x.id!==draft.id));
+  if(hit){$('barcodeStatus').innerHTML=`Match found: <b>${esc(hit.description||hit.sku||hit.barcode)}</b> <button class="btn small primary" onclick="editItem('${hit.id}')">OPEN</button>`}
+  else $('barcodeStatus').textContent='No existing matching barcode.';
+}
+$('barcodePhoto').addEventListener('change',async e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  if(!('BarcodeDetector'in window)){$('barcodeStatus').textContent='Automatic barcode detection is not supported by this WebView. Enter it manually.';return}
+  try{
+    const bmp=await createImageBitmap(f),detector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','qr_code']});
+    const r=await detector.detect(bmp);
+    if(r.length){$('barcode').value=r[0].rawValue;draftChanged();$('barcodeStatus').textContent='Barcode detected: '+r[0].rawValue;findBarcodeMatch()}
+    else $('barcodeStatus').textContent='No barcode detected in that photo.';
+  }catch(err){$('barcodeStatus').textContent='Could not scan that image. Manual entry still works.'}
+});
+
+function startMeasure(){draftChanged();go('measure');renderMeasureChips()}
+function renderMeasureChips(){
+  $('measureChips').innerHTML=segments.map((s,i)=>`<span class="chip ${measurePoints.length>=2*(i+1)?'done':Math.floor(measurePoints.length/2)===i?'now':''}">${i+1}. ${s}</span>`).join('');
+}
+$('photo').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  const im=new Image();im.onload=()=>{
+    measureImage=im;measurePoints=[];measureResult={};
+    const cv=$('canvas'),max=1400,scale=Math.min(1,max/im.naturalWidth);
+    cv.width=Math.round(im.naturalWidth*scale);cv.height=Math.round(im.naturalHeight*scale);
+    $('cameraEmpty').classList.add('hide');cv.classList.remove('hide');redrawMeasure();
+    $('measureStatus').textContent='Tap the two endpoints of the reference-card edge.';
+    renderMeasureChips();
+  };im.src=URL.createObjectURL(f);
+});
+$('canvas').addEventListener('click',e=>{
+  if(!measureImage)return;
+  const cv=$('canvas'),r=cv.getBoundingClientRect();
+  measurePoints.push({x:(e.clientX-r.left)*cv.width/r.width,y:(e.clientY-r.top)*cv.height/r.height});
+  if(measurePoints.length>8)measurePoints=measurePoints.slice(0,8);
+  redrawMeasure();calculateMeasure();renderMeasureChips();
+  const seg=Math.floor(measurePoints.length/2);
+  $('measureStatus').textContent=measurePoints.length>=8?'All edges marked. Review the calculated dimensions.':measurePoints.length%2?`Tap the second endpoint for ${segments[seg]}.`:`Now mark ${segments[seg]}.`;
+});
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function redrawMeasure(){
+  const cv=$('canvas'),ctx=cv.getContext('2d');ctx.clearRect(0,0,cv.width,cv.height);if(measureImage)ctx.drawImage(measureImage,0,0,cv.width,cv.height);
+  ctx.lineWidth=Math.max(2,cv.width/320);ctx.font=`${Math.max(16,cv.width/35)}px sans-serif`;
+  for(let i=0;i<measurePoints.length;i++){
+    const p=measurePoints[i];ctx.beginPath();ctx.arc(p.x,p.y,Math.max(5,cv.width/120),0,Math.PI*2);ctx.fillStyle='#66e1bd';ctx.fill();
+    if(i%2===1){const a=measurePoints[i-1],seg=Math.floor(i/2);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#2f8cff';ctx.stroke();ctx.fillStyle='white';ctx.fillText(segments[seg],(a.x+p.x)/2,(a.y+p.y)/2)}
+  }
+}
+function calculateMeasure(){
+  if(measurePoints.length<2)return;
+  const refPx=dist(measurePoints[0],measurePoints[1]),refCm=num(settings.refMm)/10;
+  if(!refPx||!refCm)return;
+  const scale=refCm/refPx,vals=[];
+  for(let i=1;i<4;i++)vals.push(measurePoints.length>=2*(i+1)?dist(measurePoints[i*2],measurePoints[i*2+1])*scale:0);
+  measureResult={length:vals[0],width:vals[1],height:vals[2]};
+  $('mLength').textContent=vals[0]?vals[0].toFixed(1):'—';$('mWidth').textContent=vals[1]?vals[1].toFixed(1):'—';$('mHeight').textContent=vals[2]?vals[2].toFixed(1):'—';
+}
+function resetMeasure(){measurePoints=[];measureResult={};if(measureImage)redrawMeasure();['mLength','mWidth','mHeight'].forEach(id=>$(id).textContent='—');$('measureStatus').textContent=measureImage?'Tap the two endpoints of the reference-card edge.':'Choose a photo.';renderMeasureChips()}
+function applyMeasure(){
+  if(!(measureResult.length&&measureResult.width&&measureResult.height)){alert('Mark all four segments first.');return}
+  draft.length=measureResult.length.toFixed(1);draft.width=measureResult.width.toFixed(1);draft.height=measureResult.height.toFixed(1);draft.method='camera-card';draft.confidence='Medium';draft.updatedAt=new Date().toISOString();persist();go('item');
+}
+
+function parseCSV(text){
+  text=String(text||'').replace(/^\uFEFF/,'');
+  const first=(text.split(/\r?\n/,1)[0]||''),delim=(first.split('\t').length>first.split(',').length)?'\t':',';
+  const rows=[];let row=[],cell='',q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i],n=text[i+1];
+    if(c==='"'){if(q&&n==='"'){cell+='"';i++}else q=!q}
+    else if(c===delim&&!q){row.push(cell);cell=''}
+    else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&n==='\n')i++;row.push(cell);cell='';if(row.some(x=>String(x).trim()!==''))rows.push(row);row=[]}
+    else cell+=c;
+  }
+  if(cell.length||row.length){row.push(cell);if(row.some(x=>String(x).trim()!==''))rows.push(row)}
+  if(rows.length<2)return {headers:rows[0]||[],rows:[]};
+  const headers=rows[0].map((h,i)=>String(h||`Column ${i+1}`).trim()||`Column ${i+1}`);
+  return {headers,rows:rows.slice(1).map((r,idx)=>{const o={};headers.forEach((h,i)=>o[h]=r[i]??'');o.__sourceIndex=idx+1;return o})};
+}
+$('inventoryFile').addEventListener('change',e=>{
+  const f=e.target.files&&e.target.files[0];if(!f)return;
+  const reader=new FileReader();reader.onload=()=>{
+    try{
+      const parsed=parseCSV(reader.result);importHeaders=parsed.headers;importRows=parsed.rows;
+      if(!importHeaders.length||!importRows.length)throw new Error('No data rows found.');
+      setupMapping();$('mappingBox').classList.remove('hide');$('importStatus').textContent=`Loaded ${importRows.length} rows from ${f.name}. Nothing is imported until you confirm the mapping.`;
+    }catch(err){$('importStatus').textContent='Could not read this file as CSV: '+err.message;$('mappingBox').classList.add('hide')}
+  };reader.readAsText(f);
+});
+function mappingOptions(selected=''){
+  return `<option value="">— Not mapped —</option>`+importHeaders.map(h=>`<option value="${esc(h)}"${h===selected?' selected':''}>${esc(h)}</option>`).join('');
+}
+function guessHeader(words){
+  return importHeaders.find(h=>{const x=h.toLowerCase().replace(/[_-]/g,' ');return words.some(w=>x.includes(w))})||'';
+}
+function setupMapping(){
+  const guesses={
+    mapId:guessHeader(['line','id','item no','product id']),
+    mapSku:guessHeader(['sku','product code','item code','stock code']),
+    mapBarcode:guessHeader(['barcode','ean','upc']),
+    mapDescription:guessHeader(['description','product name','item name','product']),
+    mapZone:guessHeader(['zone','area','storage','temperature','department']),
+    mapPack:guessHeader(['box','unit qty','pack type','handling','type'])
+  };
+  Object.entries(guesses).forEach(([id,g])=>$(id).innerHTML=mappingOptions(g));
+  const sample=importRows.slice(0,3).map(r=>Object.values(r).slice(0,Math.min(5,importHeaders.length)).join(' | ')).join('\n');
+  $('sampleRows').innerHTML='<b>Sample:</b><br>'+esc(sample).replace(/\n/g,'<br>');
+}
+function mapped(row,id){const h=$(id).value;return h?String(row[h]??'').trim():''}
+function commitImport(){
+  if(!importRows.length)return;
+  const dz=$('defaultZone').value,dp=$('defaultPack').value;
+  let added=0,dupes=0;
+  const existingKeys=new Set(items.map(x=>(x.barcode?`b:${x.barcode}`:x.sku?`s:${x.sku}`:'')).filter(Boolean));
+  importRows.forEach((r,idx)=>{
+    const sku=mapped(r,'mapSku'),barcode=mapped(r,'mapBarcode'),key=barcode?`b:${barcode}`:sku?`s:${sku}`:'';
+    if(key&&existingKeys.has(key)){dupes++;return}
+    if(key)existingKeys.add(key);
+    const it={id:uid(),sourceIndex:r.__sourceIndex||idx+1,sourceRow:Object.fromEntries(importHeaders.map(h=>[h,r[h]??''])),sourceId:mapped(r,'mapId'),sku,barcode,description:mapped(r,'mapDescription'),zone:normalizeZone(mapped(r,'mapZone'))||dz,packType:normalizePack(mapped(r,'mapPack'))||dp,length:'',width:'',height:'',weight:'',quantity:'',method:'manual',confidence:'Verified',notes:'',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),measuredAt:''};
+    items.push(it);added++;
+  });
+  persist();$('importStatus').textContent=`Imported ${added} rows${dupes?`; skipped ${dupes} duplicate SKU/barcodes`:''}.`;
+  importRows=[];importHeaders=[];$('mappingBox').classList.add('hide');go('dashboard');
+}
+
+function csvEscape(v){const s=String(v??'');return /[",\n\r]/.test(s)?`"${s.replace(/"/g,'""')}"`:s}
+function sourceHeaders(){const set=[],seen=new Set();items.forEach(it=>Object.keys(it.sourceRow||{}).forEach(h=>{if(!seen.has(h)){seen.add(h);set.push(h)}}));return set}
+function rowsForExport(list){
+  const src=sourceHeaders();
+  const bm=['BM_SourceLine','BM_InternalId','BM_SourceId','BM_SKU','BM_Barcode','BM_Description','BM_Zone','BM_PackType','BM_LengthCm','BM_WidthCm','BM_HeightCm','BM_WeightKg','BM_Quantity','BM_Status','BM_Method','BM_Confidence','BM_MeasuredAt','BM_UpdatedAt','BM_Notes'];
+  const headers=[...src,...bm];
+  const rows=list.map(it=>{
+    const s=statusOf(it),vals=src.map(h=>(it.sourceRow||{})[h]??'');
+    vals.push(it.sourceIndex||'',it.id,it.sourceId||'',it.sku||'',it.barcode||'',it.description||'',it.zone||'',it.packType||'',it.length||'',it.width||'',it.height||'',it.weight||'',it.quantity||'',s,it.method||'',it.confidence||'',it.measuredAt||'',it.updatedAt||'',it.notes||'');
+    return vals;
+  });
+  return [headers,...rows].map(r=>r.map(csvEscape).join(',')).join('\r\n');
+}
+function exportText(name,mime,content){
+  try{
+    if(window.AndroidBridge&&AndroidBridge.exportText){AndroidBridge.exportText(name,mime,content);$('exportStatus').textContent=`Save dialog opened for ${name}.`;return}
+  }catch(e){}
+  const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  $('exportStatus').textContent=`Export requested: ${name}.`;
+}
+function stamp(){return new Date().toISOString().replace(/[:.]/g,'-')}
+function exportMaster(){exportText(`BoxMeasure-master-${stamp()}.csv`,'text/csv',rowsForExport(items))}
+function exportCompleteOnly(){const a=items.filter(x=>statusOf(x)==='complete');exportText(`BoxMeasure-measured-${stamp()}.csv`,'text/csv',rowsForExport(a))}
+function exportCheckpoint(){
+  const since=localStorage.getItem(KEYS.checkpoint)||'1970-01-01T00:00:00.000Z',a=items.filter(x=>statusOf(x)==='complete'&&String(x.updatedAt||'')>since);
+  exportText(`BoxMeasure-checkpoint-${stamp()}.csv`,'text/csv',rowsForExport(a));
+  localStorage.setItem(KEYS.checkpoint,new Date().toISOString());renderExportStats();
+}
+function exportBackup(){exportText(`BoxMeasure-backup-${stamp()}.json`,'application/json',JSON.stringify({schema:'boxmeasure.backup.v1',createdAt:new Date().toISOString(),settings,items},null,2))}
+function renderExportStats(){
+  if(!$('exportComplete'))return;
+  const complete=items.filter(x=>statusOf(x)==='complete').length,since=localStorage.getItem(KEYS.checkpoint)||'1970-01-01T00:00:00.000Z';
+  $('exportComplete').textContent=complete;$('exportOutstanding').textContent=items.length-complete;$('exportChanged').textContent=items.filter(x=>statusOf(x)==='complete'&&String(x.updatedAt||'')>since).length;
+}
+function renderSettings(){
+  $('refMm').value=settings.refMm||85.6;
+  const chars=JSON.stringify(items).length;$('storageInfo').textContent=`${items.length} product lines stored locally · approximately ${(chars/1024).toFixed(1)} KB of record data.`;
+}
+function saveSettings(){settings.refMm=num($('refMm').value)||85.6;localStorage.setItem(KEYS.settings,JSON.stringify(settings));alert('Settings saved.')}
+function eraseAll(){if(!confirm('Erase all BoxMeasure products, measurements, drafts and settings from this app?'))return;Object.values(KEYS).forEach(k=>localStorage.removeItem(k));localStorage.removeItem('bm.records.114');items=[];draft=null;settings={refMm:85.6};persist();go('dashboard')}
+
+migrateOld();renderDashboard();renderQueue();renderExportStats();renderSettings();renderMeasureChips();
+</script>
+</body></html>

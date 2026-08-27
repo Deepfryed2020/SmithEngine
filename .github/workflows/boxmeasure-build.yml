@@ -25,7 +25,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-      - name: Compile clean single-app APK
+      - name: Compile BoxMeasure
         run: gradle --no-daemon --stacktrace clean assembleDebug
       - name: Verify APK
         run: |
@@ -37,13 +37,13 @@ jobs:
           test "$DEX_COUNT" -eq 1
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -20
-          cp "$APK" BoxMeasure-v1.1.5-clean.apk
-          sha256sum BoxMeasure-v1.1.5-clean.apk > BoxMeasure-v1.1.5-clean.apk.sha256
+          cp "$APK" BoxMeasure-v1.2.0.apk
+          sha256sum BoxMeasure-v1.2.0.apk > BoxMeasure-v1.2.0.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: BoxMeasure-v1.1.5-clean
+          name: BoxMeasure-v1.2.0
           path: |
-            BoxMeasure-v1.1.5-clean.apk
-            BoxMeasure-v1.1.5-clean.apk.sha256
+            BoxMeasure-v1.2.0.apk
+            BoxMeasure-v1.2.0.apk.sha256
           if-no-files-found: error
           retention-days: 30
