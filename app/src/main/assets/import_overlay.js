@@ -80,6 +80,7 @@
   }
   function install(){
     if(qs('bmUniversalImport')) return;
+    const headerSub=document.querySelector('header .sub');if(headerSub)headerSub.textContent='Warehouse Measurement Queue 1.2.1';
     const inp=document.createElement('input');
     inp.id='bmUniversalImport';inp.type='file';
     inp.accept='.csv,.tsv,.txt,.json,.xlsx,.xls,text/csv,text/plain,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel';
