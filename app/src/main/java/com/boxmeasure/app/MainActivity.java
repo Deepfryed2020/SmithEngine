@@ -19,8 +19,6 @@ import android.widget.Toast;
 
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends Activity {
     private static final int FILE_CHOOSER = 41;
@@ -49,8 +47,19 @@ public class MainActivity extends Activity {
         settings.setUseWideViewPort(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
 
-        webView.setWebViewClient(new WebViewClient());
         webView.addJavascriptInterface(new AndroidBridge(this), "AndroidBridge");
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                view.evaluateJavascript(
+                    "(function(){if(document.getElementById('bm-import-overlay-script'))return;" +
+                    "var s=document.createElement('script');s.id='bm-import-overlay-script';" +
+                    "s.src='file:///android_asset/import_overlay.js';document.head.appendChild(s);})();",
+                    null
+                );
+            }
+        });
 
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -59,17 +68,25 @@ public class MainActivity extends Activity {
                 fileCallback = callback;
 
                 String[] accepts = params != null ? params.getAcceptTypes() : null;
-                String primaryType = choosePrimaryMime(accepts);
-                boolean wantsImage = isImageRequest(accepts, primaryType);
+                boolean wantsImage = isImageRequest(accepts);
 
                 Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 picker.addCategory(Intent.CATEGORY_OPENABLE);
-                picker.setType(primaryType);
-                String[] mimeTypes = cleanMimeTypes(accepts);
-                if (mimeTypes.length > 1) picker.putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes);
+                if (wantsImage) {
+                    picker.setType("image/*");
+                } else {
+                    picker.setType("*/*");
+                    picker.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
+                        "text/csv",
+                        "text/plain",
+                        "application/json",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "application/vnd.ms-excel",
+                        "application/octet-stream"
+                    });
+                }
 
                 Intent chooser = Intent.createChooser(picker, wantsImage ? "Take or choose photo" : "Choose inventory file");
-
                 if (wantsImage) {
                     Intent camera = buildCameraIntent();
                     if (camera != null) chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{camera});
@@ -92,40 +109,15 @@ public class MainActivity extends Activity {
         webView.loadUrl("file:///android_asset/index.html");
     }
 
-    private String choosePrimaryMime(String[] accepts) {
-        if (accepts != null) {
-            for (String a : accepts) {
-                if (a == null) continue;
+    private boolean isImageRequest(String[] accepts) {
+        if (accepts == null) return false;
+        for (String raw : accepts) {
+            if (raw == null) continue;
+            String[] parts = raw.toLowerCase().split(",");
+            for (String a : parts) {
                 a = a.trim();
-                if (a.isEmpty()) continue;
-                if (a.startsWith(".")) {
-                    if (a.equalsIgnoreCase(".csv")) return "text/csv";
-                    if (a.equalsIgnoreCase(".txt")) return "text/plain";
-                    continue;
-                }
-                if (a.contains("/")) return a;
+                if (a.startsWith("image/") || a.equals(".jpg") || a.equals(".jpeg") || a.equals(".png") || a.equals(".webp")) return true;
             }
-        }
-        return "*/*";
-    }
-
-    private String[] cleanMimeTypes(String[] accepts) {
-        List<String> out = new ArrayList<>();
-        if (accepts != null) {
-            for (String a : accepts) {
-                if (a == null) continue;
-                a = a.trim();
-                if (a.contains("/") && !out.contains(a)) out.add(a);
-                else if (a.equalsIgnoreCase(".csv") && !out.contains("text/csv")) out.add("text/csv");
-            }
-        }
-        return out.toArray(new String[0]);
-    }
-
-    private boolean isImageRequest(String[] accepts, String primary) {
-        if (primary != null && primary.startsWith("image/")) return true;
-        if (accepts != null) {
-            for (String a : accepts) if (a != null && a.toLowerCase().contains("image")) return true;
         }
         return false;
     }
@@ -152,10 +144,7 @@ public class MainActivity extends Activity {
 
     public class AndroidBridge {
         private final Context context;
-
-        AndroidBridge(Context context) {
-            this.context = context;
-        }
+        AndroidBridge(Context context) { this.context = context; }
 
         @JavascriptInterface
         public void copyText(String label, String text) {
@@ -169,15 +158,13 @@ public class MainActivity extends Activity {
             pendingExportName = sanitizeFileName(suggestedName);
             pendingExportMime = (mimeType == null || mimeType.trim().isEmpty()) ? "text/plain" : mimeType;
             pendingExportContent = content == null ? "" : content;
-
             runOnUiThread(() -> {
                 Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType(pendingExportMime);
                 intent.putExtra(Intent.EXTRA_TITLE, pendingExportName);
-                try {
-                    startActivityForResult(intent, EXPORT_FILE);
-                } catch (Exception e) {
+                try { startActivityForResult(intent, EXPORT_FILE); }
+                catch (Exception e) {
                     Toast.makeText(MainActivity.this, "Could not open save dialog", Toast.LENGTH_LONG).show();
                     clearPendingExport();
                 }
@@ -186,11 +173,8 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String getVersion() {
-            try {
-                return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
-            } catch (Exception e) {
-                return "1.2.0";
-            }
+            try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
+            catch (Exception e) { return "1.2.1"; }
         }
     }
 
@@ -202,7 +186,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
         if (requestCode == FILE_CHOOSER) {
             if (fileCallback == null) return;
             Uri chosen = null;
@@ -210,10 +193,7 @@ public class MainActivity extends Activity {
                 if (data != null && data.getData() != null) chosen = data.getData();
                 else if (pendingCameraUri != null) chosen = pendingCameraUri;
             }
-
-            if (chosen != null) fileCallback.onReceiveValue(new Uri[]{chosen});
-            else fileCallback.onReceiveValue(null);
-
+            if (chosen != null) fileCallback.onReceiveValue(new Uri[]{chosen}); else fileCallback.onReceiveValue(null);
             if (pendingCameraUri != null && (chosen == null || !pendingCameraUri.equals(chosen))) cleanupPendingCamera();
             pendingCameraUri = null;
             fileCallback = null;
@@ -251,22 +231,14 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+        if (webView != null && webView.canGoBack()) webView.goBack(); else super.onBackPressed();
     }
 
     @Override
     protected void onDestroy() {
-        if (fileCallback != null) {
-            fileCallback.onReceiveValue(null);
-            fileCallback = null;
-        }
-        cleanupPendingCamera();
-        clearPendingExport();
-        if (webView != null) {
-            webView.destroy();
-            webView = null;
-        }
+        if (fileCallback != null) { fileCallback.onReceiveValue(null); fileCallback = null; }
+        cleanupPendingCamera();clearPendingExport();
+        if (webView != null) { webView.destroy(); webView = null; }
         super.onDestroy();
     }
 }
