@@ -25,6 +25,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+      - name: Vendor offline Excel reader
+        run: |
+          curl --fail --location --retry 3 \
+            https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js \
+            --output app/src/main/assets/xlsx.full.min.js
+          test -s app/src/main/assets/xlsx.full.min.js
       - name: Compile BoxMeasure
         run: gradle --no-daemon --stacktrace clean assembleDebug
       - name: Verify APK
@@ -32,18 +38,20 @@ jobs:
           APK=app/build/outputs/apk/debug/app-debug.apk
           test -f "$APK"
           unzip -t "$APK" >/dev/null
+          unzip -Z1 "$APK" | grep -q '^assets/import_overlay.js$'
+          unzip -Z1 "$APK" | grep -q '^assets/xlsx.full.min.js$'
           DEX_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^classes([0-9]+)?\.dex$')
           echo "DEX files: $DEX_COUNT"
           test "$DEX_COUNT" -eq 1
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -20
-          cp "$APK" BoxMeasure-v1.2.0.apk
-          sha256sum BoxMeasure-v1.2.0.apk > BoxMeasure-v1.2.0.apk.sha256
+          cp "$APK" BoxMeasure-v1.2.1.apk
+          sha256sum BoxMeasure-v1.2.1.apk > BoxMeasure-v1.2.1.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: BoxMeasure-v1.2.0
+          name: BoxMeasure-v1.2.1
           path: |
-            BoxMeasure-v1.2.0.apk
-            BoxMeasure-v1.2.0.apk.sha256
+            BoxMeasure-v1.2.1.apk
+            BoxMeasure-v1.2.1.apk.sha256
           if-no-files-found: error
           retention-days: 30
