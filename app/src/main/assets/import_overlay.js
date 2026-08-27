@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const qs=id=>document.getElementById(id);
-  function escHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function escHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));}
   function extOf(name){const n=String(name||'').toLowerCase();const i=n.lastIndexOf('.');return i>=0?n.slice(i):'';}
   function loadScript(src){
     return new Promise((resolve,reject)=>{
@@ -78,9 +78,12 @@
       const inp=qs('bmUniversalImport');if(inp)inp.value='';
     }
   }
+  function loadSafety(){
+    if(document.getElementById('bm-safety-overlay-script'))return;
+    const s=document.createElement('script');s.id='bm-safety-overlay-script';s.src='file:///android_asset/safety_overlay.js';document.head.appendChild(s);
+  }
   function install(){
-    if(qs('bmUniversalImport')) return;
-    const headerSub=document.querySelector('header .sub');if(headerSub)headerSub.textContent='Warehouse Measurement Queue 1.2.1';
+    if(qs('bmUniversalImport')){loadSafety();return;}
     const inp=document.createElement('input');
     inp.id='bmUniversalImport';inp.type='file';
     inp.accept='.csv,.tsv,.txt,.json,.xlsx,.xls,text/csv,text/plain,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel';
@@ -112,6 +115,7 @@
       const b=document.createElement('button');b.className='nav';b.dataset.page='import';b.textContent='IMPORT';b.onclick=()=>go('import');
       const exportBtn=navin.querySelector('[data-page="export"]');navin.insertBefore(b,exportBtn||null);
     }
+    loadSafety();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
