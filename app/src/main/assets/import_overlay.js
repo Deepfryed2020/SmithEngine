@@ -1,6 +1,15 @@
 (function(){
   'use strict';
+  const FALLBACK_VERSION='1.2.5';
   const qs=id=>document.getElementById(id);
+  function appVersion(){
+    try{if(window.AndroidBridge&&typeof AndroidBridge.getVersion==='function')return String(AndroidBridge.getVersion()||FALLBACK_VERSION)}catch(e){}
+    return FALLBACK_VERSION;
+  }
+  function applyVersion(){
+    const headerSub=document.querySelector('header .sub');
+    if(headerSub)headerSub.textContent='Warehouse Measurement Queue '+appVersion();
+  }
   function escHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));}
   function extOf(name){const n=String(name||'').toLowerCase();const i=n.lastIndexOf('.');return i>=0?n.slice(i):'';}
   function loadScript(src){
@@ -54,7 +63,7 @@
     const ext=extOf(file.name),type=String(file.type||'').toLowerCase();
     if(ext==='.xlsx'||ext==='.xls'||type.includes('spreadsheet')||type.includes('excel')) return await parseExcel(file);
     if(ext==='.json'||type.includes('json')) return parseJsonInventory(await file.text());
-    if(ext==='.csv'||ext==='.tsv'||ext==='.txt'||type.includes('csv')||type.startsWith('text/')){
+    if(ext==='.csv'||ext==='.tsv'||ext==='.txt'||type.includes('csv')||type.includes('comma-separated')||type.startsWith('text/')){
       if(typeof parseCSV!=='function') throw new Error('CSV parser unavailable.');
       return parseCSV(await file.text());
     }
@@ -63,6 +72,7 @@
   async function handleFile(file){
     if(!file)return;
     try{
+      applyVersion();
       go('import');
       const st=qs('importStatus');if(st)st.textContent='Reading '+file.name+'…';
       const parsed=await parseAny(file);
@@ -101,6 +111,7 @@
     const s=document.createElement('script');s.id='bm-safety-overlay-script';s.src='file:///android_asset/safety_overlay.js';document.head.appendChild(s);
   }
   function install(){
+    applyVersion();
     if(qs('bmUniversalImport')){loadSafety();return;}
     const inp=document.createElement('input');
     inp.id='bmUniversalImport';inp.type='file';
@@ -109,7 +120,7 @@
     const dashboard=qs('dashboard');
     if(dashboard){
       const card=document.createElement('div');card.className='card';card.id='bmImportHero';
-      card.innerHTML='<h2>Load your inventory first</h2><div class="sub">CSV · JSON · Excel (.xlsx/.xls). Import the stock list, map its columns once, then work through Dry / Chiller / Frozen.</div><button class="btn primary" id="bmHeroImport" style="width:100%;min-height:58px;margin-top:10px;font-size:17px">IMPORT FROM FILES</button><div class="status" style="margin-top:8px">If Android still hides the file in the picker: open the normal Files app, find the inventory file, tap <b>Share</b>, then choose <b>BoxMeasure</b>.</div>';
+      card.innerHTML='<h2>Load your inventory first</h2><div class="sub">CSV · JSON · Excel (.xlsx/.xls). Import the stock list, map its columns once, then work through Dry / Chiller / Frozen.</div><button class="btn primary" id="bmHeroImport" style="width:100%;min-height:58px;margin-top:10px;font-size:17px">IMPORT FROM FILES</button><div class="status" style="margin-top:8px"><b>If the picker hides CSV:</b> use the normal Files app where you can see it. Tap or hold the inventory file, then choose <b>Open with → BoxMeasure</b> or <b>Share → BoxMeasure</b>. This bypasses the broken picker completely.</div>';
       dashboard.insertBefore(card,dashboard.firstChild);
       qs('bmHeroImport').addEventListener('click',()=>chooseInventory(inp));
     }
@@ -119,7 +130,7 @@
       const firstCard=imp.querySelector('.card');
       if(firstCard){
         const title=firstCard.querySelector('h2');if(title)title.textContent='Import inventory file';
-        const sub=firstCard.querySelector('.sub');if(sub)sub.textContent='Load CSV, JSON, XLSX or XLS. Nothing is committed until you map the columns and confirm the import. You can also Share a file to BoxMeasure from Android Files.';
+        const sub=firstCard.querySelector('.sub');if(sub)sub.textContent='Load CSV, JSON, XLSX or XLS. Nothing is committed until you map the columns and confirm the import. Files can also be opened or shared directly into BoxMeasure from Android Files.';
         const oldLabel=firstCard.querySelector('label[for="inventoryFile"]');
         if(oldLabel){oldLabel.removeAttribute('for');oldLabel.textContent='CHOOSE INVENTORY FILE';oldLabel.style.cursor='pointer';oldLabel.onclick=()=>chooseInventory(inp);}
         const oldInput=qs('inventoryFile');if(oldInput)oldInput.disabled=true;
