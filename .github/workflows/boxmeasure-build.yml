@@ -31,16 +31,21 @@ jobs:
             https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js \
             --output app/src/main/assets/xlsx.full.min.js
           test -s app/src/main/assets/xlsx.full.min.js
-      - name: Check native/share inventory import
+      - name: Check direct inventory import paths
         run: |
           node --check app/src/main/assets/import_overlay.js
           node --check app/src/main/assets/safety_overlay.js
-          grep -q "versionName '1.2.4'" app/build.gradle
+          grep -q "versionName '1.2.5'" app/build.gradle
+          grep -q "FALLBACK_VERSION='1.2.5'" app/src/main/assets/import_overlay.js
+          grep -q 'AndroidBridge.getVersion' app/src/main/assets/import_overlay.js
           grep -q 'ACTION_GET_CONTENT' app/src/main/java/com/boxmeasure/app/MainActivity.java
           grep -q 'openInventoryPicker' app/src/main/java/com/boxmeasure/app/MainActivity.java
           grep -q 'receiveBase64' app/src/main/assets/import_overlay.js
           grep -q 'android.intent.action.SEND' app/src/main/AndroidManifest.xml
-          grep -q 'Share' app/src/main/assets/import_overlay.js
+          grep -q 'android.intent.action.VIEW' app/src/main/AndroidManifest.xml
+          grep -q 'text/comma-separated-values' app/src/main/AndroidManifest.xml
+          grep -q 'application/octet-stream' app/src/main/AndroidManifest.xml
+          grep -q 'Open with' app/src/main/assets/import_overlay.js
           grep -q "none were dropped" app/src/main/assets/safety_overlay.js
           grep -q "Source inventory files are opened read-only" app/src/main/assets/safety_overlay.js
       - name: Compile BoxMeasure
@@ -54,19 +59,21 @@ jobs:
           unzip -Z1 "$APK" | grep -q '^assets/safety_overlay.js$'
           unzip -Z1 "$APK" | grep -q '^assets/xlsx.full.min.js$'
           unzip -p "$APK" assets/import_overlay.js | grep -q 'BoxMeasureNativeImport'
+          unzip -p "$APK" assets/import_overlay.js | grep -q "FALLBACK_VERSION='1.2.5'"
           DEX_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^classes([0-9]+)?\.dex$')
           echo "DEX files: $DEX_COUNT"
           test "$DEX_COUNT" -eq 1
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | head -20
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml | grep -q 'android.intent.action.SEND'
-          cp "$APK" BoxMeasure-v1.2.4.apk
-          sha256sum BoxMeasure-v1.2.4.apk > BoxMeasure-v1.2.4.apk.sha256
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml | grep -q 'android.intent.action.VIEW'
+          cp "$APK" BoxMeasure-v1.2.5.apk
+          sha256sum BoxMeasure-v1.2.5.apk > BoxMeasure-v1.2.5.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: BoxMeasure-v1.2.4
+          name: BoxMeasure-v1.2.5
           path: |
-            BoxMeasure-v1.2.4.apk
-            BoxMeasure-v1.2.4.apk.sha256
+            BoxMeasure-v1.2.5.apk
+            BoxMeasure-v1.2.5.apk.sha256
           if-no-files-found: error
           retention-days: 30
