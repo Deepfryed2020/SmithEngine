@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const VERSION='1.2.2';
+  const VERSION='1.2.3';
   const META_KEY='bm.importmeta.122';
   const VALIDATION_KEY='bm.validation.122';
   const $=id=>document.getElementById(id);
@@ -58,7 +58,7 @@
   function statusClass(v){return v.hardFail?'warn':v.warnings?'warn':'ok'}
   function detailsHtml(v){
     const dupeCount=v.skuDupes.length+v.barcodeDupes.length;
-    const batchRows=v.batches.length?v.batches.map(b=>`<div class="item"><b>${esc(b.fileName||b.id)}</b><div class="itemmeta">Expected ${b.rowCount} source rows · ${b.present} still present · ${b.ok?'MATCH':'MISMATCH'}</div></div>`).join(''):'<div class="status">No v1.2.2 import batch metadata yet. Existing 1.2.1 data is still usable.</div>';
+    const batchRows=v.batches.length?v.batches.map(b=>`<div class="item"><b>${esc(b.fileName||b.id)}</b><div class="itemmeta">Expected ${b.rowCount} source rows · ${b.present} still present · ${b.ok?'MATCH':'MISMATCH'}</div></div>`).join(''):'<div class="status">No v1.2.2+ import batch metadata yet. Existing earlier data is still usable.</div>';
     return `<div class="grid3">
       <div class="metric"><b>${v.total}</b><small>output rows</small></div>
       <div class="metric"><b>${v.complete}</b><small>complete</small></div>
@@ -104,7 +104,7 @@
     lines.push('');
     lines.push('IMPORT BATCHES');
     if(v.batches.length)v.batches.forEach(b=>lines.push(`${b.fileName||b.id}: expected ${b.rowCount}, present ${b.present}, ${b.ok?'MATCH':'MISMATCH'}`));
-    else lines.push('No v1.2.2 import batches recorded.');
+    else lines.push('No v1.2.2+ import batches recorded.');
     lines.push('');
     lines.push('RESULT: '+statusWord(v));
     if(v.hardFail)lines.push('Export should be stopped until source integrity/batch mismatch is resolved.');
