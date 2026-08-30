@@ -17,10 +17,33 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Files app Share -> BoxMeasure. Keep wildcard because some Android/ColorOS
+                 providers report CSV files with nonstandard or generic MIME types. -->
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="*/*" />
+            </intent-filter>
+
+            <!-- Files app tap/Open with -> BoxMeasure. These cover the MIME labels commonly
+                 assigned to CSV/JSON/Excel by Android, OEM file managers and cloud providers. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:mimeType="text/csv" />
+                <data android:mimeType="text/comma-separated-values" />
+                <data android:mimeType="text/x-csv" />
+                <data android:mimeType="text/x-comma-separated-values" />
+                <data android:mimeType="application/csv" />
+                <data android:mimeType="application/x-csv" />
+                <data android:mimeType="text/plain" />
+                <data android:mimeType="application/json" />
+                <data android:mimeType="text/json" />
+                <data android:mimeType="application/vnd.ms-excel" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+                <data android:mimeType="application/octet-stream" />
             </intent-filter>
         </activity>
     </application>
