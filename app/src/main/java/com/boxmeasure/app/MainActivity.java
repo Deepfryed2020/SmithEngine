@@ -7,8 +7,11 @@ import android.content.ClipboardManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
+import android.util.Base64;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -17,12 +20,18 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 public class MainActivity extends Activity {
     private static final int FILE_CHOOSER = 41;
     private static final int EXPORT_FILE = 42;
+    private static final int INVENTORY_FILE = 43;
+    private static final int MAX_IMPORT_BYTES = 12 * 1024 * 1024;
 
     private WebView webView;
     private ValueCallback<Uri[]> fileCallback;
@@ -30,6 +39,9 @@ public class MainActivity extends Activity {
     private String pendingExportContent;
     private String pendingExportMime;
     private String pendingExportName;
+    private String pendingImportName;
+    private String pendingImportMime;
+    private String pendingImportBase64;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +70,7 @@ public class MainActivity extends Activity {
                     "s.src='file:///android_asset/import_overlay.js';document.head.appendChild(s);})();",
                     null
                 );
+                view.postDelayed(() -> deliverPendingImport(0), 350);
             }
         });
 
@@ -73,19 +86,9 @@ public class MainActivity extends Activity {
                 Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 picker.addCategory(Intent.CATEGORY_OPENABLE);
                 picker.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                picker.setType(wantsImage ? "image/*" : "*/*");
 
-                if (wantsImage) {
-                    picker.setType("image/*");
-                } else {
-                    // Deliberately do not provide EXTRA_MIME_TYPES here. Several Android/ColorOS
-                    // document providers classify CSV files inconsistently (text/csv, text/plain,
-                    // application/vnd.ms-excel or application/octet-stream). Using */* makes the
-                    // inventory browser show the real file; BoxMeasure validates the extension and
-                    // contents after the user selects it.
-                    picker.setType("*/*");
-                }
-
-                Intent chooser = Intent.createChooser(picker, wantsImage ? "Take or choose photo" : "Choose inventory file (all files)");
+                Intent chooser = Intent.createChooser(picker, wantsImage ? "Take or choose photo" : "Choose file");
                 if (wantsImage) {
                     Intent camera = buildCameraIntent();
                     if (camera != null) chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{camera});
@@ -106,6 +109,15 @@ public class MainActivity extends Activity {
         });
 
         webView.loadUrl("file:///android_asset/index.html");
+        handleIncomingIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIncomingIntent(intent);
+        if (webView != null) webView.postDelayed(() -> deliverPendingImport(0), 100);
     }
 
     private boolean isImageRequest(String[] accepts) {
@@ -141,9 +153,95 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void openNativeInventoryPicker() {
+        Intent picker = new Intent(Intent.ACTION_GET_CONTENT);
+        picker.addCategory(Intent.CATEGORY_OPENABLE);
+        picker.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        picker.setType("*/*");
+        try {
+            startActivityForResult(Intent.createChooser(picker, "Choose inventory file — all files"), INVENTORY_FILE);
+        } catch (Exception e) {
+            Toast.makeText(this, "Could not open Files", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void handleIncomingIntent(Intent intent) {
+        if (intent == null) return;
+        Uri uri = null;
+        if (Intent.ACTION_SEND.equals(intent.getAction())) {
+            try { uri = intent.getParcelableExtra(Intent.EXTRA_STREAM); } catch (Exception ignored) {}
+        } else if (Intent.ACTION_VIEW.equals(intent.getAction())) {
+            uri = intent.getData();
+        }
+        if (uri != null) preparePendingImport(uri);
+    }
+
+    private void preparePendingImport(Uri uri) {
+        try {
+            byte[] bytes = readImportBytes(uri);
+            pendingImportName = queryDisplayName(uri);
+            if (pendingImportName == null || pendingImportName.trim().isEmpty()) pendingImportName = "inventory-file";
+            pendingImportMime = getContentResolver().getType(uri);
+            if (pendingImportMime == null || pendingImportMime.trim().isEmpty()) pendingImportMime = "application/octet-stream";
+            pendingImportBase64 = Base64.encodeToString(bytes, Base64.NO_WRAP);
+        } catch (Exception e) {
+            clearPendingImport();
+            Toast.makeText(this, "Could not read inventory file: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private byte[] readImportBytes(Uri uri) throws Exception {
+        try (InputStream in = getContentResolver().openInputStream(uri); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            if (in == null) throw new IllegalStateException("No input stream");
+            byte[] buf = new byte[16384];
+            int total = 0;
+            int n;
+            while ((n = in.read(buf)) != -1) {
+                total += n;
+                if (total > MAX_IMPORT_BYTES) throw new IllegalArgumentException("File is larger than 12 MB");
+                out.write(buf, 0, n);
+            }
+            return out.toByteArray();
+        }
+    }
+
+    private String queryDisplayName(Uri uri) {
+        Cursor c = null;
+        try {
+            c = getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null);
+            if (c != null && c.moveToFirst()) {
+                int i = c.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (i >= 0) return c.getString(i);
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (c != null) c.close();
+        }
+        return uri.getLastPathSegment();
+    }
+
+    private void deliverPendingImport(int attempt) {
+        if (webView == null || pendingImportBase64 == null) return;
+        String script = "(function(){if(!window.BoxMeasureNativeImport||!window.BoxMeasureNativeImport.receiveBase64)return false;" +
+            "return window.BoxMeasureNativeImport.receiveBase64(" +
+            JSONObject.quote(pendingImportName) + "," + JSONObject.quote(pendingImportMime) + "," + JSONObject.quote(pendingImportBase64) + ");})()";
+        webView.evaluateJavascript(script, result -> {
+            if ("true".equals(result)) {
+                clearPendingImport();
+            } else if (attempt < 12 && webView != null) {
+                webView.postDelayed(() -> deliverPendingImport(attempt + 1), 250);
+            }
+        });
+    }
+
     public class AndroidBridge {
         private final Context context;
         AndroidBridge(Context context) { this.context = context; }
+
+        @JavascriptInterface
+        public void openInventoryPicker() {
+            runOnUiThread(() -> openNativeInventoryPicker());
+        }
 
         @JavascriptInterface
         public void copyText(String label, String text) {
@@ -173,7 +271,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String getVersion() {
             try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
-            catch (Exception e) { return "1.2.3"; }
+            catch (Exception e) { return "1.2.4"; }
         }
     }
 
@@ -185,6 +283,15 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == INVENTORY_FILE) {
+            if (resultCode == RESULT_OK && data != null && data.getData() != null) {
+                preparePendingImport(data.getData());
+                deliverPendingImport(0);
+            }
+            return;
+        }
+
         if (requestCode == FILE_CHOOSER) {
             if (fileCallback == null) return;
             Uri chosen = null;
@@ -215,6 +322,12 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void clearPendingImport() {
+        pendingImportName = null;
+        pendingImportMime = null;
+        pendingImportBase64 = null;
+    }
+
     private void clearPendingExport() {
         pendingExportContent = null;
         pendingExportMime = null;
@@ -236,7 +349,9 @@ public class MainActivity extends Activity {
     @Override
     protected void onDestroy() {
         if (fileCallback != null) { fileCallback.onReceiveValue(null); fileCallback = null; }
-        cleanupPendingCamera();clearPendingExport();
+        cleanupPendingCamera();
+        clearPendingImport();
+        clearPendingExport();
         if (webView != null) { webView.destroy(); webView = null; }
         super.onDestroy();
     }
