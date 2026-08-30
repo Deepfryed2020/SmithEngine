@@ -72,21 +72,20 @@ public class MainActivity extends Activity {
 
                 Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 picker.addCategory(Intent.CATEGORY_OPENABLE);
+                picker.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
                 if (wantsImage) {
                     picker.setType("image/*");
                 } else {
+                    // Deliberately do not provide EXTRA_MIME_TYPES here. Several Android/ColorOS
+                    // document providers classify CSV files inconsistently (text/csv, text/plain,
+                    // application/vnd.ms-excel or application/octet-stream). Using */* makes the
+                    // inventory browser show the real file; BoxMeasure validates the extension and
+                    // contents after the user selects it.
                     picker.setType("*/*");
-                    picker.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{
-                        "text/csv",
-                        "text/plain",
-                        "application/json",
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        "application/vnd.ms-excel",
-                        "application/octet-stream"
-                    });
                 }
 
-                Intent chooser = Intent.createChooser(picker, wantsImage ? "Take or choose photo" : "Choose inventory file");
+                Intent chooser = Intent.createChooser(picker, wantsImage ? "Take or choose photo" : "Choose inventory file (all files)");
                 if (wantsImage) {
                     Intent camera = buildCameraIntent();
                     if (camera != null) chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{camera});
@@ -174,7 +173,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String getVersion() {
             try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
-            catch (Exception e) { return "1.2.1"; }
+            catch (Exception e) { return "1.2.3"; }
         }
     }
 
