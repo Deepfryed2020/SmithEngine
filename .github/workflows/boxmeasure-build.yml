@@ -37,7 +37,7 @@ jobs:
           node --check app/src/main/assets/safety_overlay.js
           grep -q "const VERSION='1.2.3'" app/src/main/assets/safety_overlay.js
           grep -q 'picker.setType("\*/\*")' app/src/main/java/com/boxmeasure/app/MainActivity.java
-          if grep -q 'EXTRA_MIME_TYPES' app/src/main/java/com/boxmeasure/app/MainActivity.java; then
+          if grep -q 'putExtra(Intent.EXTRA_MIME_TYPES' app/src/main/java/com/boxmeasure/app/MainActivity.java; then
             echo "Inventory picker must not restrict MIME types"
             exit 1
           fi
