@@ -78,6 +78,24 @@
       const inp=qs('bmUniversalImport');if(inp)inp.value='';
     }
   }
+  function fileFromBase64(name,mime,b64){
+    const raw=atob(b64),bytes=new Uint8Array(raw.length);
+    for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+    try{return new File([bytes],name||'inventory-file',{type:mime||'application/octet-stream'});}
+    catch(e){const blob=new Blob([bytes],{type:mime||'application/octet-stream'});blob.name=name||'inventory-file';return blob;}
+  }
+  window.BoxMeasureNativeImport={
+    receiveBase64:function(name,mime,b64){
+      try{handleFile(fileFromBase64(name,mime,b64));return true}
+      catch(err){const st=qs('importStatus');if(st)st.textContent='Native import failed: '+(err&&err.message?err.message:String(err));return false}
+    }
+  };
+  function chooseInventory(inp){
+    try{
+      if(window.AndroidBridge&&typeof AndroidBridge.openInventoryPicker==='function'){AndroidBridge.openInventoryPicker();return}
+    }catch(e){}
+    inp.click();
+  }
   function loadSafety(){
     if(document.getElementById('bm-safety-overlay-script'))return;
     const s=document.createElement('script');s.id='bm-safety-overlay-script';s.src='file:///android_asset/safety_overlay.js';document.head.appendChild(s);
@@ -86,15 +104,14 @@
     if(qs('bmUniversalImport')){loadSafety();return;}
     const inp=document.createElement('input');
     inp.id='bmUniversalImport';inp.type='file';
-    inp.accept='.csv,.tsv,.txt,.json,.xlsx,.xls,text/csv,text/plain,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel';
     inp.style.display='none';inp.addEventListener('change',e=>handleFile(e.target.files&&e.target.files[0]));document.body.appendChild(inp);
 
     const dashboard=qs('dashboard');
     if(dashboard){
       const card=document.createElement('div');card.className='card';card.id='bmImportHero';
-      card.innerHTML='<h2>Load your inventory first</h2><div class="sub">CSV · JSON · Excel (.xlsx/.xls). Import the stock list, map its columns once, then work through Dry / Chiller / Frozen.</div><button class="btn primary" id="bmHeroImport" style="width:100%;min-height:58px;margin-top:10px;font-size:17px">IMPORT INVENTORY FILE</button>';
+      card.innerHTML='<h2>Load your inventory first</h2><div class="sub">CSV · JSON · Excel (.xlsx/.xls). Import the stock list, map its columns once, then work through Dry / Chiller / Frozen.</div><button class="btn primary" id="bmHeroImport" style="width:100%;min-height:58px;margin-top:10px;font-size:17px">IMPORT FROM FILES</button><div class="status" style="margin-top:8px">If Android still hides the file in the picker: open the normal Files app, find the inventory file, tap <b>Share</b>, then choose <b>BoxMeasure</b>.</div>';
       dashboard.insertBefore(card,dashboard.firstChild);
-      qs('bmHeroImport').addEventListener('click',()=>inp.click());
+      qs('bmHeroImport').addEventListener('click',()=>chooseInventory(inp));
     }
 
     const imp=qs('import');
@@ -102,9 +119,9 @@
       const firstCard=imp.querySelector('.card');
       if(firstCard){
         const title=firstCard.querySelector('h2');if(title)title.textContent='Import inventory file';
-        const sub=firstCard.querySelector('.sub');if(sub)sub.textContent='Load CSV, JSON, XLSX or XLS. Nothing is committed until you map the columns and confirm the import.';
+        const sub=firstCard.querySelector('.sub');if(sub)sub.textContent='Load CSV, JSON, XLSX or XLS. Nothing is committed until you map the columns and confirm the import. You can also Share a file to BoxMeasure from Android Files.';
         const oldLabel=firstCard.querySelector('label[for="inventoryFile"]');
-        if(oldLabel){oldLabel.removeAttribute('for');oldLabel.textContent='CHOOSE CSV / JSON / EXCEL FILE';oldLabel.style.cursor='pointer';oldLabel.onclick=()=>inp.click();}
+        if(oldLabel){oldLabel.removeAttribute('for');oldLabel.textContent='CHOOSE INVENTORY FILE';oldLabel.style.cursor='pointer';oldLabel.onclick=()=>chooseInventory(inp);}
         const oldInput=qs('inventoryFile');if(oldInput)oldInput.disabled=true;
       }
     }
