@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const FALLBACK_VERSION='1.2.5';
+  const FALLBACK_VERSION='1.3.0';
   const qs=id=>document.getElementById(id);
   function appVersion(){
     try{if(window.AndroidBridge&&typeof AndroidBridge.getVersion==='function')return String(AndroidBridge.getVersion()||FALLBACK_VERSION)}catch(e){}
@@ -106,13 +106,18 @@
     }catch(e){}
     inp.click();
   }
-  function loadSafety(){
-    if(document.getElementById('bm-safety-overlay-script'))return;
-    const s=document.createElement('script');s.id='bm-safety-overlay-script';s.src='file:///android_asset/safety_overlay.js';document.head.appendChild(s);
+  function injectAssetScript(id,file){
+    if(document.getElementById(id))return;
+    const s=document.createElement('script');s.id=id;s.src='file:///android_asset/'+file;document.head.appendChild(s);
+  }
+  function loadSuite(){
+    injectAssetScript('bm-safety-overlay-script','safety_overlay.js');
+    injectAssetScript('bm-ultimate-overlay-script','ultimate_overlay.js');
+    injectAssetScript('bm-visual-export-overlay-script','visual_export_overlay.js');
   }
   function install(){
     applyVersion();
-    if(qs('bmUniversalImport')){loadSafety();return;}
+    if(qs('bmUniversalImport')){loadSuite();return;}
     const inp=document.createElement('input');
     inp.id='bmUniversalImport';inp.type='file';
     inp.style.display='none';inp.addEventListener('change',e=>handleFile(e.target.files&&e.target.files[0]));document.body.appendChild(inp);
@@ -120,7 +125,7 @@
     const dashboard=qs('dashboard');
     if(dashboard){
       const card=document.createElement('div');card.className='card';card.id='bmImportHero';
-      card.innerHTML='<h2>Load your inventory first</h2><div class="sub">CSV · JSON · Excel (.xlsx/.xls). Import the stock list, map its columns once, then work through Dry / Chiller / Frozen.</div><button class="btn primary" id="bmHeroImport" style="width:100%;min-height:58px;margin-top:10px;font-size:17px">IMPORT FROM FILES</button><div class="status" style="margin-top:8px"><b>If the picker hides CSV:</b> use the normal Files app where you can see it. Tap or hold the inventory file, then choose <b>Open with → BoxMeasure</b> or <b>Share → BoxMeasure</b>. This bypasses the broken picker completely.</div>';
+      card.innerHTML='<h2>Load your inventory first</h2><div class="sub">CSV · JSON · Excel (.xlsx/.xls). Import the stock list, map its columns once, then work through Dry / Chiller / Frozen.</div><button class="btn primary" id="bmHeroImport" style="width:100%;min-height:58px;margin-top:10px;font-size:17px">IMPORT FROM FILES</button><div class="status" style="margin-top:8px"><b>If the picker hides CSV:</b> use the normal Files app where you can see it. Tap or hold the inventory file, then choose <b>Open with → BoxMeasure</b> or <b>Share → BoxMeasure</b>. This bypasses the picker completely.</div>';
       dashboard.insertBefore(card,dashboard.firstChild);
       qs('bmHeroImport').addEventListener('click',()=>chooseInventory(inp));
     }
@@ -143,7 +148,7 @@
       const b=document.createElement('button');b.className='nav';b.dataset.page='import';b.textContent='IMPORT';b.onclick=()=>go('import');
       const exportBtn=navin.querySelector('[data-page="export"]');navin.insertBefore(b,exportBtn||null);
     }
-    loadSafety();
+    loadSuite();
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
