@@ -1,6 +1,14 @@
 (function(){
   'use strict';
   const VERSION='1.3.0';
+  function bridgeGlobal(name){
+    if(Object.prototype.hasOwnProperty.call(window,name))return;
+    try{
+      Object.defineProperty(window,name,{configurable:true,get:function(){try{return eval(name)}catch(e){return undefined}},set:function(value){try{eval(name+' = value')}catch(e){}}});
+    }catch(e){}
+  }
+  bridgeGlobal('draft');
+  bridgeGlobal('items');
   function install(){
     if(typeof window.rowsForExport!=='function'||typeof window.sourceHeaders!=='function'||typeof window.csvEscape!=='function'||typeof window.statusOf!=='function'||typeof window.exportText!=='function'){setTimeout(install,150);return}
     window.rowsForExport=function(list){
@@ -27,6 +35,7 @@
       note.innerHTML='<b>Visual verification:</b> CSV exports include BM_ProductPhoto, BM_UnitPhoto and BM_BoxPhoto as YES/NO flags. The image files themselves stay local inside BoxMeasure.';
       const cards=exp.querySelectorAll('.card');if(cards.length)cards[cards.length-1].appendChild(note);
     }
+    try{if(window.BoxMeasureUltimate&&typeof BoxMeasureUltimate.renderOps==='function')BoxMeasureUltimate.renderOps()}catch(e){}
   }
   install();
 })();
