@@ -31,33 +31,36 @@ jobs:
             https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js \
             --output app/src/main/assets/xlsx.full.min.js
           test -s app/src/main/assets/xlsx.full.min.js
-      - name: Check v1.3.2 source and navigation
+      - name: Check v1.3.3 freeze hotfix source
         run: |
           node --check app/src/main/assets/import_overlay.js
           node --check app/src/main/assets/safety_overlay.js
           node --check app/src/main/assets/ultimate_overlay.js
           node --check app/src/main/assets/visual_export_overlay.js
           node --check app/src/main/assets/sheet131_overlay.js
-          node --check app/src/main/assets/unit_guard_131.js
           node --check app/src/main/assets/core132.js
           node --check app/src/main/assets/ui132.js
           node --check app/src/main/assets/export132.js
-          node --check app/src/main/assets/nav132_hotfix.js
-          node tools/test_nav132.js
-          grep -Fq "versionCode 23" app/build.gradle
-          grep -Fq "versionName '1.3.2'" app/build.gradle
-          grep -Fq "VERSION='1.3.2'" app/src/main/assets/core132.js
-          grep -Fq 'unit weight' app/src/main/assets/core132.js
-          grep -Fiq 'dimensions are optional' app/src/main/assets/ui132.js
-          grep -Fq 'MARK N/A' app/src/main/assets/ui132.js
-          grep -Fq 'COPY SHARED DETAILS' app/src/main/assets/ui132.js
-          grep -Fq 'Warehouse sheet confirmed' app/src/main/assets/ui132.js
-          grep -Fq '.sort(C().sortWork)' app/src/main/assets/ui132.js
-          grep -Fq 'exceeds gross' app/src/main/assets/core132.js
+          node --check app/src/main/assets/bootstrap133.js
+          node --check app/src/main/assets/safe_nav133.js
+          grep -Fq "versionCode 24" app/build.gradle
+          grep -Fq "versionName '1.3.3'" app/build.gradle
+          grep -Fq "VERSION='1.3.3'" app/src/main/assets/core132.js
+          grep -Fq "App version: 1.3.3" app/src/main/assets/export132.js
+          grep -Fq "bootstrap133.js" app/src/main/java/com/boxmeasure/app/MainActivity.java
+          ! grep -Fq "sheet131_overlay.js';document.head.appendChild" app/src/main/java/com/boxmeasure/app/MainActivity.java
+          grep -Fq "characterData=false" app/src/main/assets/bootstrap133.js
+          grep -Fq "bm-safety-overlay-script" app/src/main/assets/bootstrap133.js
+          grep -Fq "bm-ultimate-overlay-script" app/src/main/assets/bootstrap133.js
+          grep -Fq "bm-sheet131-overlay-script" app/src/main/assets/bootstrap133.js
+          grep -Fq "bm-core132-script" app/src/main/assets/bootstrap133.js
+          grep -Fq "bm-ui132-script" app/src/main/assets/bootstrap133.js
+          grep -Fq "bm-export132-script" app/src/main/assets/bootstrap133.js
+          grep -Fq "bm-safe-nav133-script" app/src/main/assets/bootstrap133.js
+          grep -Fq "window.go=safeGo" app/src/main/assets/safe_nav133.js
+          grep -Fq "window.__bm133Ready" app/src/main/java/com/boxmeasure/app/MainActivity.java
           grep -Fq 'EXPORT PAPER-LAYOUT CSV' app/src/main/assets/export132.js
           grep -Fq 'BM_CompletionRule' app/src/main/assets/export132.js
-          grep -Fq 'nav132_hotfix.js' app/src/main/assets/unit_guard_131.js
-          grep -Fq 'window.go=stableGo' app/src/main/assets/nav132_hotfix.js
           grep -Fq 'boxmeasure.media.v1' app/src/main/assets/ultimate_overlay.js
           grep -Fq 'ACTION_GET_CONTENT' app/src/main/java/com/boxmeasure/app/MainActivity.java
           grep -Fq 'android.intent.action.SEND' app/src/main/AndroidManifest.xml
@@ -74,34 +77,33 @@ jobs:
           unzip -Z1 "$APK" | grep -q '^assets/ultimate_overlay.js$'
           unzip -Z1 "$APK" | grep -q '^assets/visual_export_overlay.js$'
           unzip -Z1 "$APK" | grep -q '^assets/sheet131_overlay.js$'
-          unzip -Z1 "$APK" | grep -q '^assets/unit_guard_131.js$'
           unzip -Z1 "$APK" | grep -q '^assets/core132.js$'
           unzip -Z1 "$APK" | grep -q '^assets/ui132.js$'
           unzip -Z1 "$APK" | grep -q '^assets/export132.js$'
-          unzip -Z1 "$APK" | grep -q '^assets/nav132_hotfix.js$'
+          unzip -Z1 "$APK" | grep -q '^assets/bootstrap133.js$'
+          unzip -Z1 "$APK" | grep -q '^assets/safe_nav133.js$'
           unzip -Z1 "$APK" | grep -q '^assets/xlsx.full.min.js$'
-          unzip -p "$APK" assets/core132.js | grep -Fq "VERSION='1.3.2'"
-          unzip -p "$APK" assets/ui132.js | grep -Fiq 'dimensions are optional'
-          unzip -p "$APK" assets/ui132.js | grep -Fq 'MARK N/A'
+          unzip -p "$APK" assets/bootstrap133.js | grep -Fq 'characterData=false'
+          unzip -p "$APK" assets/bootstrap133.js | grep -Fq 'safe_nav133.js'
+          unzip -p "$APK" assets/safe_nav133.js | grep -Fq 'window.go=safeGo'
+          unzip -p "$APK" assets/core132.js | grep -Fq "VERSION='1.3.3'"
           unzip -p "$APK" assets/export132.js | grep -Fq 'EXPORT PAPER-LAYOUT CSV'
-          unzip -p "$APK" assets/export132.js | grep -Fq 'BM_CompletionRule'
-          unzip -p "$APK" assets/nav132_hotfix.js | grep -Fq 'window.go=stableGo'
           DEX_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^classes([0-9]+)?\.dex$')
           echo "DEX files: $DEX_COUNT"
           test "$DEX_COUNT" -eq 1
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee badging.txt | head -20
-          grep -Fq "versionCode='23'" badging.txt
-          grep -Fq "versionName='1.3.2'" badging.txt
+          grep -Fq "versionCode='24'" badging.txt
+          grep -Fq "versionName='1.3.3'" badging.txt
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml | grep -Fq 'android.intent.action.SEND'
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml | grep -Fq 'android.intent.action.VIEW'
-          cp "$APK" BoxMeasure-v1.3.2-hotfix.apk
-          sha256sum BoxMeasure-v1.3.2-hotfix.apk > BoxMeasure-v1.3.2-hotfix.apk.sha256
+          cp "$APK" BoxMeasure-v1.3.3.apk
+          sha256sum BoxMeasure-v1.3.3.apk > BoxMeasure-v1.3.3.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: BoxMeasure-v1.3.2-hotfix
+          name: BoxMeasure-v1.3.3
           path: |
-            BoxMeasure-v1.3.2-hotfix.apk
-            BoxMeasure-v1.3.2-hotfix.apk.sha256
+            BoxMeasure-v1.3.3.apk
+            BoxMeasure-v1.3.3.apk.sha256
           if-no-files-found: error
           retention-days: 30
