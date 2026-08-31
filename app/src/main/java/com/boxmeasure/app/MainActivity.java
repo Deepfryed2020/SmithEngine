@@ -68,6 +68,7 @@ public class MainActivity extends Activity {
                     "(function(){" +
                     "if(!document.getElementById('bm-import-overlay-script')){var s=document.createElement('script');s.id='bm-import-overlay-script';s.src='file:///android_asset/import_overlay.js';document.head.appendChild(s);}" +
                     "if(!document.getElementById('bm-sheet131-overlay-script')){var t=document.createElement('script');t.id='bm-sheet131-overlay-script';t.src='file:///android_asset/sheet131_overlay.js';document.head.appendChild(t);}" +
+                    "if(!document.getElementById('bm-unitguard131-script')){var u=document.createElement('script');u.id='bm-unitguard131-script';u.src='file:///android_asset/unit_guard_131.js';document.head.appendChild(u);}" +
                     "})();",
                     null
                 );
