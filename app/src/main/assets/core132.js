@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-const VERSION='1.3.2', META_KEY='bm.importmeta.122';
+const VERSION='1.3.3', META_KEY='bm.importmeta.122';
 const n=v=>Number(String(v??'').trim().replace(',','.'))||0;
 const natural=(a,b)=>String(a||'').localeCompare(String(b||''),undefined,{numeric:true,sensitivity:'base'});
 function canonicalPack(v){const s=String(v||'').trim().toLowerCase();if(s==='box'||s==='carton'||s.includes('carton')||s.includes('case'))return 'Carton';if(s==='unit qty'||s==='unit'||s.includes('unit'))return 'Unit';return ''}
