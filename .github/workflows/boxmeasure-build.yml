@@ -39,17 +39,20 @@ jobs:
           node --check app/src/main/assets/visual_export_overlay.js
           node --check app/src/main/assets/sheet131_overlay.js
           node --check app/src/main/assets/unit_guard_131.js
+          node --check app/src/main/assets/completion_guard_131.js
           grep -q "versionName '1.3.1'" app/build.gradle
           grep -q "const VERSION='1.3.1'" app/src/main/assets/sheet131_overlay.js
           grep -q "const VERSION='1.3.1'" app/src/main/assets/safety_overlay.js
           grep -q "const VERSION='1.3.1'" app/src/main/assets/visual_export_overlay.js
           grep -q 'sheet131_overlay.js' app/src/main/java/com/boxmeasure/app/MainActivity.java
           grep -q 'unit_guard_131.js' app/src/main/java/com/boxmeasure/app/MainActivity.java
+          grep -q 'completion_guard_131.js' app/src/main/assets/unit_guard_131.js
           grep -q 'Location / pick face' app/src/main/assets/sheet131_overlay.js
           grep -q 'Millimetres (MM)' app/src/main/assets/sheet131_overlay.js
           grep -q 'Carton or Unit' app/src/main/assets/sheet131_overlay.js
           grep -q 'Item # + Carton/Unit' app/src/main/assets/safety_overlay.js
           grep -q 'UNIT NOT CONFIRMED' app/src/main/assets/unit_guard_131.js
+          grep -q 'dimensionUnitConfirmed' app/src/main/assets/completion_guard_131.js
           grep -q 'BM_Location' app/src/main/assets/visual_export_overlay.js
           grep -q 'BM_CartonOrUnit' app/src/main/assets/visual_export_overlay.js
           grep -q 'BM_DimensionInputUnit' app/src/main/assets/visual_export_overlay.js
@@ -76,10 +79,12 @@ jobs:
           unzip -Z1 "$APK" | grep -q '^assets/visual_export_overlay.js$'
           unzip -Z1 "$APK" | grep -q '^assets/sheet131_overlay.js$'
           unzip -Z1 "$APK" | grep -q '^assets/unit_guard_131.js$'
+          unzip -Z1 "$APK" | grep -q '^assets/completion_guard_131.js$'
           unzip -Z1 "$APK" | grep -q '^assets/xlsx.full.min.js$'
           unzip -p "$APK" assets/sheet131_overlay.js | grep -q 'Location / pick face'
           unzip -p "$APK" assets/sheet131_overlay.js | grep -q 'Millimetres (MM)'
           unzip -p "$APK" assets/unit_guard_131.js | grep -q 'UNIT NOT CONFIRMED'
+          unzip -p "$APK" assets/completion_guard_131.js | grep -q 'dimensionUnitConfirmed'
           unzip -p "$APK" assets/safety_overlay.js | grep -q 'Item # + Carton/Unit'
           unzip -p "$APK" assets/visual_export_overlay.js | grep -q 'BM_Location'
           unzip -p "$APK" assets/visual_export_overlay.js | grep -q 'BM_NetWeightText'
