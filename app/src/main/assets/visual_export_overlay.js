@@ -10,7 +10,7 @@
   function canonicalPack(v){const s=String(v||'').trim().toLowerCase();if(s==='box'||s==='carton'||s.includes('carton')||s.includes('case'))return 'Carton';if(s==='unit qty'||s==='unit'||s.includes('unit'))return 'Unit';return ''}
   function batchUnit(it){try{const b=JSON.parse(localStorage.getItem('bm.importmeta.122')||'[]').find(x=>x.id===it.importBatchId);return b?String(b.dimensionUnit||''):''}catch(e){return ''}}
   function unitOf(it){
-    const raw=String(it&&it.dimensionUnit??'').toLowerCase();
+    const raw=String(it&&it.dimensionUnit ? it.dimensionUnit : '').toLowerCase();
     if(raw==='mm'||raw==='cm')return raw;
     if(it&&it.importBatchId&&batchUnit(it)==='unspecified'&&(n(it.length)||n(it.width)||n(it.height)))return '';
     return 'cm';
