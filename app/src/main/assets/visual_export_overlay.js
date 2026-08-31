@@ -1,7 +1,8 @@
 (function(){
   'use strict';
+  const VERSION='1.3.0';
   function install(){
-    if(typeof window.rowsForExport!=='function'||typeof window.sourceHeaders!=='function'||typeof window.csvEscape!=='function'||typeof window.statusOf!=='function'){setTimeout(install,150);return}
+    if(typeof window.rowsForExport!=='function'||typeof window.sourceHeaders!=='function'||typeof window.csvEscape!=='function'||typeof window.statusOf!=='function'||typeof window.exportText!=='function'){setTimeout(install,150);return}
     window.rowsForExport=function(list){
       const src=sourceHeaders();
       const bm=['BM_SourceLine','BM_InternalId','BM_SourceId','BM_SKU','BM_Barcode','BM_Description','BM_Zone','BM_PackType','BM_LengthCm','BM_WidthCm','BM_HeightCm','BM_WeightKg','BM_Quantity','BM_Status','BM_Method','BM_Confidence','BM_MeasuredAt','BM_UpdatedAt','BM_ProductPhoto','BM_UnitPhoto','BM_BoxPhoto','BM_Notes'];
@@ -13,6 +14,13 @@
       });
       return [headers,...rows].map(r=>r.map(csvEscape).join(',')).join('\r\n');
     };
+    const oldExport=exportText;
+    window.exportText=function(name,mime,content){
+      if(String(name||'').startsWith('BoxMeasure-audit-'))content=String(content||'').replace(/App version:\s*[^\r\n]+/,'App version: '+VERSION);
+      return oldExport(name,mime,content);
+    };
+    const header=document.querySelector('header .sub');
+    if(header){let v=VERSION;try{if(window.AndroidBridge&&typeof AndroidBridge.getVersion==='function')v=AndroidBridge.getVersion()||VERSION}catch(e){}header.textContent='Warehouse Measurement & Visual Verification '+v;}
     const exp=document.getElementById('export');
     if(exp&&!document.getElementById('bmVisualExportNote')){
       const note=document.createElement('div');note.id='bmVisualExportNote';note.className='status';
