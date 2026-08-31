@@ -31,30 +31,34 @@ jobs:
             https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js \
             --output app/src/main/assets/xlsx.full.min.js
           test -s app/src/main/assets/xlsx.full.min.js
-      - name: Check v1.3.0 source
+      - name: Check v1.3.1 source
         run: |
           node --check app/src/main/assets/import_overlay.js
           node --check app/src/main/assets/safety_overlay.js
           node --check app/src/main/assets/ultimate_overlay.js
           node --check app/src/main/assets/visual_export_overlay.js
-          grep -q "versionName '1.3.0'" app/build.gradle
-          grep -q "FALLBACK_VERSION='1.3.0'" app/src/main/assets/import_overlay.js
-          grep -q "const VERSION='1.3.0'" app/src/main/assets/ultimate_overlay.js
+          node --check app/src/main/assets/sheet131_overlay.js
+          grep -q "versionName '1.3.1'" app/build.gradle
+          grep -q "const VERSION='1.3.1'" app/src/main/assets/sheet131_overlay.js
+          grep -q "const VERSION='1.3.1'" app/src/main/assets/safety_overlay.js
+          grep -q "const VERSION='1.3.1'" app/src/main/assets/visual_export_overlay.js
+          grep -q 'sheet131_overlay.js' app/src/main/java/com/boxmeasure/app/MainActivity.java
+          grep -q 'Location / pick face' app/src/main/assets/sheet131_overlay.js
+          grep -q 'Millimetres (MM)' app/src/main/assets/sheet131_overlay.js
+          grep -q 'Carton or Unit' app/src/main/assets/sheet131_overlay.js
+          grep -q 'Item # + Carton/Unit' app/src/main/assets/safety_overlay.js
+          grep -q 'BM_Location' app/src/main/assets/visual_export_overlay.js
+          grep -q 'BM_CartonOrUnit' app/src/main/assets/visual_export_overlay.js
+          grep -q 'BM_DimensionInputUnit' app/src/main/assets/visual_export_overlay.js
+          grep -q 'BM_GrossWeightKg' app/src/main/assets/visual_export_overlay.js
+          grep -q 'BM_NetWeightText' app/src/main/assets/visual_export_overlay.js
           grep -q 'boxmeasure.media.v1' app/src/main/assets/ultimate_overlay.js
-          grep -q 'Visual pick verification' app/src/main/assets/ultimate_overlay.js
-          grep -q 'TAKE / CHOOSE' app/src/main/assets/ultimate_overlay.js
-          grep -q 'BM_ProductPhoto' app/src/main/assets/visual_export_overlay.js
-          grep -q 'BM_UnitPhoto' app/src/main/assets/visual_export_overlay.js
-          grep -q 'BM_BoxPhoto' app/src/main/assets/visual_export_overlay.js
-          grep -q 'ultimate_overlay.js' app/src/main/assets/import_overlay.js
-          grep -q 'visual_export_overlay.js' app/src/main/assets/import_overlay.js
           grep -q 'ACTION_GET_CONTENT' app/src/main/java/com/boxmeasure/app/MainActivity.java
           grep -q 'openInventoryPicker' app/src/main/java/com/boxmeasure/app/MainActivity.java
           grep -q 'receiveBase64' app/src/main/assets/import_overlay.js
           grep -q 'android.intent.action.SEND' app/src/main/AndroidManifest.xml
           grep -q 'android.intent.action.VIEW' app/src/main/AndroidManifest.xml
-          grep -q "none were dropped" app/src/main/assets/safety_overlay.js
-          grep -q "Source inventory files are opened read-only" app/src/main/assets/safety_overlay.js
+          grep -q 'Source inventory files remain read-only' app/src/main/assets/safety_overlay.js
       - name: Compile BoxMeasure
         run: gradle --no-daemon --stacktrace clean assembleDebug
       - name: Verify APK
@@ -66,26 +70,29 @@ jobs:
           unzip -Z1 "$APK" | grep -q '^assets/safety_overlay.js$'
           unzip -Z1 "$APK" | grep -q '^assets/ultimate_overlay.js$'
           unzip -Z1 "$APK" | grep -q '^assets/visual_export_overlay.js$'
+          unzip -Z1 "$APK" | grep -q '^assets/sheet131_overlay.js$'
           unzip -Z1 "$APK" | grep -q '^assets/xlsx.full.min.js$'
-          unzip -p "$APK" assets/ultimate_overlay.js | grep -q 'Visual pick verification'
+          unzip -p "$APK" assets/sheet131_overlay.js | grep -q 'Location / pick face'
+          unzip -p "$APK" assets/sheet131_overlay.js | grep -q 'Millimetres (MM)'
+          unzip -p "$APK" assets/safety_overlay.js | grep -q 'Item # + Carton/Unit'
+          unzip -p "$APK" assets/visual_export_overlay.js | grep -q 'BM_Location'
+          unzip -p "$APK" assets/visual_export_overlay.js | grep -q 'BM_NetWeightText'
           unzip -p "$APK" assets/ultimate_overlay.js | grep -q 'boxmeasure.media.v1'
-          unzip -p "$APK" assets/visual_export_overlay.js | grep -q 'BM_ProductPhoto'
-          unzip -p "$APK" assets/import_overlay.js | grep -q "FALLBACK_VERSION='1.3.0'"
           DEX_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^classes([0-9]+)?\.dex$')
           echo "DEX files: $DEX_COUNT"
           test "$DEX_COUNT" -eq 1
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee badging.txt | head -20
-          grep -q "versionName='1.3.0'" badging.txt
+          grep -q "versionName='1.3.1'" badging.txt
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml | grep -q 'android.intent.action.SEND'
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml | grep -q 'android.intent.action.VIEW'
-          cp "$APK" BoxMeasure-v1.3.0.apk
-          sha256sum BoxMeasure-v1.3.0.apk > BoxMeasure-v1.3.0.apk.sha256
+          cp "$APK" BoxMeasure-v1.3.1.apk
+          sha256sum BoxMeasure-v1.3.1.apk > BoxMeasure-v1.3.1.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: BoxMeasure-v1.3.0
+          name: BoxMeasure-v1.3.1
           path: |
-            BoxMeasure-v1.3.0.apk
-            BoxMeasure-v1.3.0.apk.sha256
+            BoxMeasure-v1.3.1.apk
+            BoxMeasure-v1.3.1.apk.sha256
           if-no-files-found: error
           retention-days: 30
