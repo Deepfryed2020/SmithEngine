@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const files=['core132.js','ui132.js','export132.js'];
+  const files=['core132.js','ui132.js','export132.js','nav132_hotfix.js'];
   files.forEach((file,i)=>{
     const id='bm132-'+i;
     if(document.getElementById(id))return;
