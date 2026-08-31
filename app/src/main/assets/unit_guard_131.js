@@ -25,12 +25,13 @@
   }
   function protectSelection(){
     ensureBlankOption();const sel=$('dimensionUnit');if(!sel||sel.__bmUnitGuard)return;sel.__bmUnitGuard=true;
-    sel.addEventListener('change',()=>{try{if(typeof draft!=='undefined'&&draft&&sel.value){draft.dimensionUnit=sel.value;const ix=items.findIndex(x=>x.id===draft.id);if(ix>=0)items[ix].dimensionUnit=sel.value;persist()}}catch(e){}});
+    sel.addEventListener('change',()=>{try{if(typeof draft!=='undefined'&&draft&&sel.value){draft.dimensionUnit=sel.value;draft.dimensionUnitConfirmed=true;const ix=items.findIndex(x=>x.id===draft.id);if(ix>=0){items[ix].dimensionUnit=sel.value;items[ix].dimensionUnitConfirmed=true}persist()}}catch(e){}});
   }
+  function loadCompletionGuard(){if(document.getElementById('bm-completionguard131-script'))return;const s=document.createElement('script');s.id='bm-completionguard131-script';s.src='file:///android_asset/completion_guard_131.js';document.head.appendChild(s)}
   function install(){
     if(installed)return;
     if(!document.body||!window.BoxMeasure131||typeof fillItem!=='function'||typeof renderQueue!=='function'){setTimeout(install,160);return}
-    installed=true;patchFill();patchQueue();protectSelection();resolveCurrent();
+    installed=true;patchFill();patchQueue();protectSelection();resolveCurrent();loadCompletionGuard();
     if(typeof go==='function'&&!go.__bmUnitGuard){const old=go;const wrapped=function(id){old(id);if(id==='item')setTimeout(()=>{protectSelection();resolveCurrent()},0);if(id==='work')setTimeout(()=>renderQueue(),0)};wrapped.__bmUnitGuard=true;go=wrapped}
     if($('item'))new MutationObserver(()=>protectSelection()).observe($('item'),{childList:true,subtree:true});
     renderQueue();
