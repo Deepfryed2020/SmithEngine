@@ -29,7 +29,7 @@ jobs:
         run: |
           curl --fail --location --retry 3 https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js --output app/src/main/assets/xlsx.full.min.js
           test -s app/src/main/assets/xlsx.full.min.js
-      - name: Check v1.3.5 source
+      - name: Check v1.3.6 source
         run: |
           set -eux
           node --check app/src/main/assets/import_overlay.js
@@ -42,9 +42,12 @@ jobs:
           node --check app/src/main/assets/navigation135.js
           node --check app/src/main/assets/unit_guard_135.js
           node --check app/src/main/assets/completion_guard_135.js
-          grep -F "versionCode 27" app/build.gradle
-          grep -F "versionName '1.3.5'" app/build.gradle
-          grep -F "RUNTIME 1.3.5" app/src/main/assets/navigation135.js
+          node --check app/src/main/assets/freeze_guard_136.js
+          grep -F "versionCode 28" app/build.gradle
+          grep -F "versionName '1.3.6'" app/build.gradle
+          grep -F "RUNTIME 1.3.6" app/src/main/assets/navigation135.js
+          grep -F "freeze_guard_136.js" app/src/main/assets/bootstrap135.js
+          grep -F "blocked recursive item MutationObserver" app/src/main/assets/freeze_guard_136.js
           grep -F "removeAttribute('onclick')" app/src/main/assets/navigation135.js
           for f in core132.js ui132.js export132.js safe_nav133.js nav132_hotfix.js bootstrap133.js; do test ! -e "app/src/main/assets/$f"; done
       - name: Compile BoxMeasure
@@ -55,23 +58,25 @@ jobs:
           APK=app/build/outputs/apk/debug/app-debug.apk
           test -f "$APK"
           unzip -t "$APK" >/dev/null
-          for f in import_overlay.js safety_overlay.js ultimate_overlay.js visual_export_overlay.js sheet131_overlay.js bootstrap134.js bootstrap135.js navigation135.js unit_guard_135.js completion_guard_135.js xlsx.full.min.js; do unzip -Z1 "$APK" | grep -q "^assets/$f$"; done
+          for f in import_overlay.js safety_overlay.js ultimate_overlay.js visual_export_overlay.js sheet131_overlay.js bootstrap134.js bootstrap135.js navigation135.js unit_guard_135.js completion_guard_135.js freeze_guard_136.js xlsx.full.min.js; do unzip -Z1 "$APK" | grep -q "^assets/$f$"; done
           for f in core132.js ui132.js export132.js safe_nav133.js nav132_hotfix.js bootstrap133.js; do ! unzip -Z1 "$APK" | grep -q "^assets/$f$"; done
-          unzip -p "$APK" assets/navigation135.js | grep -F 'RUNTIME 1.3.5'
+          unzip -p "$APK" assets/navigation135.js | grep -F 'RUNTIME 1.3.6'
+          unzip -p "$APK" assets/bootstrap135.js | grep -F 'freeze_guard_136.js'
+          unzip -p "$APK" assets/freeze_guard_136.js | grep -F 'blocked recursive item MutationObserver'
           unzip -p "$APK" assets/navigation135.js | grep -F "removeAttribute('onclick')"
           DEX_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^classes([0-9]+)?[.]dex$')
           test "$DEX_COUNT" -eq 1
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee badging.txt | head -20
-          grep -F "versionCode='27'" badging.txt
-          grep -F "versionName='1.3.5'" badging.txt
-          cp "$APK" BoxMeasure-v1.3.5-NAV-RECOVERY.apk
-          sha256sum BoxMeasure-v1.3.5-NAV-RECOVERY.apk > BoxMeasure-v1.3.5-NAV-RECOVERY.apk.sha256
+          grep -F "versionCode='28'" badging.txt
+          grep -F "versionName='1.3.6'" badging.txt
+          cp "$APK" BoxMeasure-v1.3.6-FREEZE-RECOVERY.apk
+          sha256sum BoxMeasure-v1.3.6-FREEZE-RECOVERY.apk > BoxMeasure-v1.3.6-FREEZE-RECOVERY.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: BoxMeasure-v1.3.5-NAV-RECOVERY
+          name: BoxMeasure-v1.3.6-FREEZE-RECOVERY
           path: |
-            BoxMeasure-v1.3.5-NAV-RECOVERY.apk
-            BoxMeasure-v1.3.5-NAV-RECOVERY.apk.sha256
+            BoxMeasure-v1.3.6-FREEZE-RECOVERY.apk
+            BoxMeasure-v1.3.6-FREEZE-RECOVERY.apk.sha256
           if-no-files-found: error
           retention-days: 30
