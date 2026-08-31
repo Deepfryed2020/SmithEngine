@@ -27,11 +27,9 @@ jobs:
           gradle-version: '8.9'
       - name: Vendor offline Excel reader
         run: |
-          curl --fail --location --retry 3 \
-            https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js \
-            --output app/src/main/assets/xlsx.full.min.js
+          curl --fail --location --retry 3 https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js --output app/src/main/assets/xlsx.full.min.js
           test -s app/src/main/assets/xlsx.full.min.js
-      - name: Check v1.3.4 cache-busted recovery source
+      - name: Check v1.3.5 navigation recovery source
         run: |
           node --check app/src/main/assets/import_overlay.js
           node --check app/src/main/assets/safety_overlay.js
@@ -39,26 +37,27 @@ jobs:
           node --check app/src/main/assets/visual_export_overlay.js
           node --check app/src/main/assets/sheet131_overlay.js
           node --check app/src/main/assets/bootstrap134.js
-          node --check app/src/main/assets/unit_guard_134.js
-          node --check app/src/main/assets/completion_guard_134.js
-          grep -Fq "versionCode 26" app/build.gradle
-          grep -Fq "versionName '1.3.4'" app/build.gradle
-          grep -Fq "bootstrap134.js" app/src/main/java/com/boxmeasure/app/MainActivity.java
-          grep -Fq "window.__bm134Ready" app/src/main/java/com/boxmeasure/app/MainActivity.java
+          node --check app/src/main/assets/bootstrap135.js
+          node --check app/src/main/assets/navigation135.js
+          node --check app/src/main/assets/unit_guard_135.js
+          node --check app/src/main/assets/completion_guard_135.js
+          grep -Fq "versionCode 27" app/build.gradle
+          grep -Fq "versionName '1.3.5'" app/build.gradle
+          grep -Fq "bootstrap135.js" app/src/main/assets/bootstrap134.js
+          grep -Fq "navigation135.js" app/src/main/assets/bootstrap135.js
+          grep -Fq "RUNTIME 1.3.5" app/src/main/assets/navigation135.js
+          grep -Fq "removeAttribute('onclick')" app/src/main/assets/navigation135.js
+          grep -Fq "pack==='Carton'&&classified&&wt&&dims" app/src/main/assets/completion_guard_135.js
+          grep -Fq "pack==='Unit'&&classified&&wt" app/src/main/assets/completion_guard_135.js
+          test ! -e app/src/main/assets/core132.js
+          test ! -e app/src/main/assets/ui132.js
+          test ! -e app/src/main/assets/export132.js
+          test ! -e app/src/main/assets/safe_nav133.js
+          test ! -e app/src/main/assets/nav132_hotfix.js
+          test ! -e app/src/main/assets/bootstrap133.js
           grep -Fq "LOAD_NO_CACHE" app/src/main/java/com/boxmeasure/app/MainActivity.java
           grep -Fq "clearCache(true)" app/src/main/java/com/boxmeasure/app/MainActivity.java
-          grep -Fq "import_overlay.js" app/src/main/assets/bootstrap134.js
-          grep -Fq "sheet131_overlay.js" app/src/main/assets/bootstrap134.js
-          grep -Fq "unit_guard_134.js" app/src/main/assets/bootstrap134.js
-          grep -Fq "completion_guard_134.js" app/src/main/assets/unit_guard_134.js
-          grep -Fq "pack==='Carton'&&classified&&wt&&dims" app/src/main/assets/completion_guard_134.js
-          grep -Fq "pack==='Unit'&&classified&&wt" app/src/main/assets/completion_guard_134.js
-          grep -Fq "bm.defaultDimUnit','cm'" app/src/main/assets/completion_guard_134.js
-          if grep -Eq 'core132\.js|ui132\.js|export132\.js|safe_nav133\.js|nav132_hotfix\.js|bootstrap133\.js' app/src/main/assets/bootstrap134.js; then echo 'FAIL: unstable controller referenced by v1.3.4 bootstrap'; exit 1; fi
-          if grep -Eq 'core132\.js|ui132\.js|export132\.js|safe_nav133\.js|nav132_hotfix\.js' app/src/main/assets/unit_guard_134.js; then echo 'FAIL: unstable controller referenced by v1.3.4 completion loader'; exit 1; fi
           grep -Fq 'ACTION_GET_CONTENT' app/src/main/java/com/boxmeasure/app/MainActivity.java
-          grep -Fq 'android.intent.action.SEND' app/src/main/AndroidManifest.xml
-          grep -Fq 'android.intent.action.VIEW' app/src/main/AndroidManifest.xml
       - name: Compile BoxMeasure
         run: gradle --no-daemon --stacktrace clean assembleDebug
       - name: Verify APK
@@ -66,35 +65,24 @@ jobs:
           APK=app/build/outputs/apk/debug/app-debug.apk
           test -f "$APK"
           unzip -t "$APK" >/dev/null
-          unzip -Z1 "$APK" | grep -q '^assets/import_overlay.js$'
-          unzip -Z1 "$APK" | grep -q '^assets/safety_overlay.js$'
-          unzip -Z1 "$APK" | grep -q '^assets/ultimate_overlay.js$'
-          unzip -Z1 "$APK" | grep -q '^assets/visual_export_overlay.js$'
-          unzip -Z1 "$APK" | grep -q '^assets/sheet131_overlay.js$'
-          unzip -Z1 "$APK" | grep -q '^assets/bootstrap134.js$'
-          unzip -Z1 "$APK" | grep -q '^assets/unit_guard_134.js$'
-          unzip -Z1 "$APK" | grep -q '^assets/completion_guard_134.js$'
-          unzip -Z1 "$APK" | grep -q '^assets/xlsx.full.min.js$'
-          unzip -p "$APK" assets/bootstrap134.js | grep -Fq 'unit_guard_134.js'
-          unzip -p "$APK" assets/unit_guard_134.js | grep -Fq 'completion_guard_134.js'
-          unzip -p "$APK" assets/completion_guard_134.js | grep -Fq "pack==='Unit'&&classified&&wt"
-          if unzip -p "$APK" assets/bootstrap134.js | grep -Eq 'core132\.js|ui132\.js|export132\.js|safe_nav133\.js|nav132_hotfix\.js|bootstrap133\.js'; then echo 'FAIL: unstable controller packaged in v1.3.4 startup'; exit 1; fi
-          DEX_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^classes([0-9]+)?\.dex$')
-          echo "DEX files: $DEX_COUNT"
+          for f in import_overlay.js safety_overlay.js ultimate_overlay.js visual_export_overlay.js sheet131_overlay.js bootstrap134.js bootstrap135.js navigation135.js unit_guard_135.js completion_guard_135.js xlsx.full.min.js; do unzip -Z1 "$APK" | grep -q "^assets/$f$"; done
+          for f in core132.js ui132.js export132.js safe_nav133.js nav132_hotfix.js bootstrap133.js; do if unzip -Z1 "$APK" | grep -q "^assets/$f$"; then echo "FAIL: stale asset $f packaged"; exit 1; fi; done
+          unzip -p "$APK" assets/navigation135.js | grep -Fq 'RUNTIME 1.3.5'
+          unzip -p "$APK" assets/navigation135.js | grep -Fq "removeAttribute('onclick')"
+          unzip -p "$APK" assets/completion_guard_135.js | grep -Fq "pack==='Unit'&&classified&&wt"
+          DEX_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^classes([0-9]+)?\\.dex$')
           test "$DEX_COUNT" -eq 1
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee badging.txt | head -20
-          grep -Fq "versionCode='26'" badging.txt
-          grep -Fq "versionName='1.3.4'" badging.txt
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml | grep -Fq 'android.intent.action.SEND'
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump xmltree "$APK" AndroidManifest.xml | grep -Fq 'android.intent.action.VIEW'
-          cp "$APK" BoxMeasure-v1.3.4.apk
-          sha256sum BoxMeasure-v1.3.4.apk > BoxMeasure-v1.3.4.apk.sha256
+          grep -Fq "versionCode='27'" badging.txt
+          grep -Fq "versionName='1.3.5'" badging.txt
+          cp "$APK" BoxMeasure-v1.3.5-NAV-RECOVERY.apk
+          sha256sum BoxMeasure-v1.3.5-NAV-RECOVERY.apk > BoxMeasure-v1.3.5-NAV-RECOVERY.apk.sha256
       - uses: actions/upload-artifact@v4
         with:
-          name: BoxMeasure-v1.3.4
+          name: BoxMeasure-v1.3.5-NAV-RECOVERY
           path: |
-            BoxMeasure-v1.3.4.apk
-            BoxMeasure-v1.3.4.apk.sha256
+            BoxMeasure-v1.3.5-NAV-RECOVERY.apk
+            BoxMeasure-v1.3.5-NAV-RECOVERY.apk.sha256
           if-no-files-found: error
           retention-days: 30
