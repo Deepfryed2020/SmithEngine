@@ -66,13 +66,15 @@ public class MainActivity extends Activity {
                 super.onPageFinished(view, url);
                 view.evaluateJavascript(
                     "(function(){" +
-                    "if(!document.getElementById('bm-import-overlay-script')){var s=document.createElement('script');s.id='bm-import-overlay-script';s.src='file:///android_asset/import_overlay.js';document.head.appendChild(s);}" +
-                    "if(!document.getElementById('bm-sheet131-overlay-script')){var t=document.createElement('script');t.id='bm-sheet131-overlay-script';t.src='file:///android_asset/sheet131_overlay.js';document.head.appendChild(t);}" +
-                    "if(!document.getElementById('bm-unitguard131-script')){var u=document.createElement('script');u.id='bm-unitguard131-script';u.src='file:///android_asset/unit_guard_131.js';document.head.appendChild(u);}" +
+                    "if(!document.getElementById('bm-bootstrap133-script')){" +
+                    "var s=document.createElement('script');" +
+                    "s.id='bm-bootstrap133-script';" +
+                    "s.src='file:///android_asset/bootstrap133.js';" +
+                    "document.head.appendChild(s);}" +
                     "})();",
                     null
                 );
-                view.postDelayed(() -> deliverPendingImport(0), 450);
+                view.postDelayed(() -> deliverPendingImport(0), 700);
             }
         });
 
@@ -224,13 +226,13 @@ public class MainActivity extends Activity {
 
     private void deliverPendingImport(int attempt) {
         if (webView == null || pendingImportBase64 == null) return;
-        String script = "(function(){if(!window.BoxMeasureNativeImport||!window.BoxMeasureNativeImport.receiveBase64)return false;" +
+        String script = "(function(){if(!window.__bm133Ready||!window.BoxMeasureNativeImport||!window.BoxMeasureNativeImport.receiveBase64)return false;" +
             "return window.BoxMeasureNativeImport.receiveBase64(" +
             JSONObject.quote(pendingImportName) + "," + JSONObject.quote(pendingImportMime) + "," + JSONObject.quote(pendingImportBase64) + ");})()";
         webView.evaluateJavascript(script, result -> {
             if ("true".equals(result)) {
                 clearPendingImport();
-            } else if (attempt < 12 && webView != null) {
+            } else if (attempt < 24 && webView != null) {
                 webView.postDelayed(() -> deliverPendingImport(attempt + 1), 250);
             }
         });
@@ -273,7 +275,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String getVersion() {
             try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
-            catch (Exception e) { return "1.3.1"; }
+            catch (Exception e) { return "1.3.3"; }
         }
     }
 
