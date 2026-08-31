@@ -65,12 +65,13 @@ public class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
                 view.evaluateJavascript(
-                    "(function(){if(document.getElementById('bm-import-overlay-script'))return;" +
-                    "var s=document.createElement('script');s.id='bm-import-overlay-script';" +
-                    "s.src='file:///android_asset/import_overlay.js';document.head.appendChild(s);})();",
+                    "(function(){" +
+                    "if(!document.getElementById('bm-import-overlay-script')){var s=document.createElement('script');s.id='bm-import-overlay-script';s.src='file:///android_asset/import_overlay.js';document.head.appendChild(s);}" +
+                    "if(!document.getElementById('bm-sheet131-overlay-script')){var t=document.createElement('script');t.id='bm-sheet131-overlay-script';t.src='file:///android_asset/sheet131_overlay.js';document.head.appendChild(t);}" +
+                    "})();",
                     null
                 );
-                view.postDelayed(() -> deliverPendingImport(0), 350);
+                view.postDelayed(() -> deliverPendingImport(0), 450);
             }
         });
 
@@ -271,7 +272,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String getVersion() {
             try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
-            catch (Exception e) { return "1.2.4"; }
+            catch (Exception e) { return "1.3.1"; }
         }
     }
 
