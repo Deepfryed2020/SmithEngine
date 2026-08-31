@@ -59,7 +59,7 @@ jobs:
           for f in core132.js ui132.js export132.js safe_nav133.js nav132_hotfix.js bootstrap133.js; do ! unzip -Z1 "$APK" | grep -q "^assets/$f$"; done
           unzip -p "$APK" assets/navigation135.js | grep -F 'RUNTIME 1.3.5'
           unzip -p "$APK" assets/navigation135.js | grep -F "removeAttribute('onclick')"
-          DEX_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^classes([0-9]+)?\\.dex$')
+          DEX_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^classes([0-9]+)?[.]dex$')
           test "$DEX_COUNT" -eq 1
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee badging.txt | head -20
