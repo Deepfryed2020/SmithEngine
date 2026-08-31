@@ -58,6 +58,8 @@ public class MainActivity extends Activity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
+        webView.clearCache(true);
 
         webView.addJavascriptInterface(new AndroidBridge(this), "AndroidBridge");
         webView.setWebViewClient(new WebViewClient() {
@@ -66,15 +68,16 @@ public class MainActivity extends Activity {
                 super.onPageFinished(view, url);
                 view.evaluateJavascript(
                     "(function(){" +
-                    "if(!document.getElementById('bm-bootstrap133-script')){" +
+                    "if(!document.getElementById('bm-bootstrap134-script')){" +
                     "var s=document.createElement('script');" +
-                    "s.id='bm-bootstrap133-script';" +
-                    "s.src='file:///android_asset/bootstrap133.js';" +
+                    "s.id='bm-bootstrap134-script';" +
+                    "s.async=false;" +
+                    "s.src='file:///android_asset/bootstrap134.js';" +
                     "document.head.appendChild(s);}" +
                     "})();",
                     null
                 );
-                view.postDelayed(() -> deliverPendingImport(0), 700);
+                view.postDelayed(() -> deliverPendingImport(0), 500);
             }
         });
 
@@ -226,7 +229,7 @@ public class MainActivity extends Activity {
 
     private void deliverPendingImport(int attempt) {
         if (webView == null || pendingImportBase64 == null) return;
-        String script = "(function(){if(!window.__bm133Ready||!window.BoxMeasureNativeImport||!window.BoxMeasureNativeImport.receiveBase64)return false;" +
+        String script = "(function(){if(!window.__bm134Ready||!window.BoxMeasureNativeImport||!window.BoxMeasureNativeImport.receiveBase64)return false;" +
             "return window.BoxMeasureNativeImport.receiveBase64(" +
             JSONObject.quote(pendingImportName) + "," + JSONObject.quote(pendingImportMime) + "," + JSONObject.quote(pendingImportBase64) + ");})()";
         webView.evaluateJavascript(script, result -> {
@@ -275,7 +278,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String getVersion() {
             try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; }
-            catch (Exception e) { return "1.3.3"; }
+            catch (Exception e) { return "1.3.4"; }
         }
     }
 
