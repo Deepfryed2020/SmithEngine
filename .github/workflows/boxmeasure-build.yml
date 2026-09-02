@@ -1,9 +1,9 @@
-name: Build BoxMeasure Clean APK
+name: Build BoxMeasure v1.3.8 recovered
 
 on:
   push:
     branches:
-      - boxmeasure-build-20260825
+      - boxmeasure-v1.3.8-recovered-build
   workflow_dispatch:
 
 permissions:
@@ -12,7 +12,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -25,58 +25,71 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+
+      - name: Restore recovered v1.3.8 source overlay
+        run: |
+          set -eux
+          cat .boxmeasure138_overlay/part00.b64 \
+              .boxmeasure138_overlay/part01.b64 \
+              .boxmeasure138_overlay/part02.b64 \
+              .boxmeasure138_overlay/part03.b64 \
+              .boxmeasure138_overlay/part04.b64 \
+              .boxmeasure138_overlay/part05.b64 \
+              .boxmeasure138_overlay/part06.b64 \
+              .boxmeasure138_overlay/part07.b64 \
+              .boxmeasure138_overlay/part08.b64 \
+              .boxmeasure138_overlay/part09.b64 \
+              .boxmeasure138_overlay/part10.b64 \
+              .boxmeasure138_overlay/part11.b64 > /tmp/boxmeasure138.b64
+          base64 --decode /tmp/boxmeasure138.b64 > /tmp/boxmeasure138.zip
+          unzip -t /tmp/boxmeasure138.zip
+          unzip -o /tmp/boxmeasure138.zip -d .
+
       - name: Vendor offline Excel reader
         run: |
           curl --fail --location --retry 3 https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js --output app/src/main/assets/xlsx.full.min.js
           test -s app/src/main/assets/xlsx.full.min.js
-      - name: Check v1.3.6 source
+
+      - name: Verify recovered source
         run: |
           set -eux
-          node --check app/src/main/assets/import_overlay.js
-          node --check app/src/main/assets/safety_overlay.js
-          node --check app/src/main/assets/ultimate_overlay.js
-          node --check app/src/main/assets/visual_export_overlay.js
-          node --check app/src/main/assets/sheet131_overlay.js
-          node --check app/src/main/assets/bootstrap134.js
+          grep -F "versionCode 30" app/build.gradle
+          grep -F "versionName '1.3.8'" app/build.gradle
+          grep -F "com.google.mlkit:text-recognition:16.0.1" app/build.gradle
+          grep -F "RUNTIME 1.3.8" app/src/main/assets/navigation135.js
+          grep -F "Paper Sheet Import" app/src/main/assets/index.html
+          grep -F "__bm137Ready" app/src/main/assets/pabrai137.js
+          grep -F "recognizePaper" app/src/main/java/com/boxmeasure/app/MainActivity.java
+          node --check app/src/main/assets/paper_import.js
+          node --check app/src/main/assets/pabrai137.js
           node --check app/src/main/assets/bootstrap135.js
           node --check app/src/main/assets/navigation135.js
-          node --check app/src/main/assets/unit_guard_135.js
-          node --check app/src/main/assets/completion_guard_135.js
-          node --check app/src/main/assets/freeze_guard_136.js
-          grep -F "versionCode 28" app/build.gradle
-          grep -F "versionName '1.3.6'" app/build.gradle
-          grep -F "RUNTIME 1.3.6" app/src/main/assets/navigation135.js
-          grep -F "freeze_guard_136.js" app/src/main/assets/bootstrap135.js
-          grep -F "blocked recursive item MutationObserver" app/src/main/assets/freeze_guard_136.js
-          grep -F "removeAttribute('onclick')" app/src/main/assets/navigation135.js
-          for f in core132.js ui132.js export132.js safe_nav133.js nav132_hotfix.js bootstrap133.js; do test ! -e "app/src/main/assets/$f"; done
-      - name: Compile BoxMeasure
-        run: gradle --no-daemon --stacktrace clean assembleDebug
+
+      - name: Compile debug APK
+        run: gradle --no-daemon --stacktrace clean :app:assembleDebug
+
       - name: Verify APK
         run: |
           set -eux
           APK=app/build/outputs/apk/debug/app-debug.apk
           test -f "$APK"
           unzip -t "$APK" >/dev/null
-          for f in import_overlay.js safety_overlay.js ultimate_overlay.js visual_export_overlay.js sheet131_overlay.js bootstrap134.js bootstrap135.js navigation135.js unit_guard_135.js completion_guard_135.js freeze_guard_136.js xlsx.full.min.js; do unzip -Z1 "$APK" | grep -q "^assets/$f$"; done
-          for f in core132.js ui132.js export132.js safe_nav133.js nav132_hotfix.js bootstrap133.js; do ! unzip -Z1 "$APK" | grep -q "^assets/$f$"; done
-          unzip -p "$APK" assets/navigation135.js | grep -F 'RUNTIME 1.3.6'
-          unzip -p "$APK" assets/bootstrap135.js | grep -F 'freeze_guard_136.js'
-          unzip -p "$APK" assets/freeze_guard_136.js | grep -F 'blocked recursive item MutationObserver'
-          unzip -p "$APK" assets/navigation135.js | grep -F "removeAttribute('onclick')"
-          DEX_COUNT=$(unzip -Z1 "$APK" | grep -Ec '^classes([0-9]+)?[.]dex$')
-          test "$DEX_COUNT" -eq 1
+          unzip -Z1 "$APK" | grep -q '^assets/paper_import.js$'
+          unzip -Z1 "$APK" | grep -q '^assets/pabrai137.js$'
+          unzip -Z1 "$APK" | grep -q '^assets/release-lineage.json$'
+          unzip -p "$APK" assets/navigation135.js | grep -F 'RUNTIME 1.3.8'
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee badging.txt | head -20
-          grep -F "versionCode='28'" badging.txt
-          grep -F "versionName='1.3.6'" badging.txt
-          cp "$APK" BoxMeasure-v1.3.6-FREEZE-RECOVERY.apk
-          sha256sum BoxMeasure-v1.3.6-FREEZE-RECOVERY.apk > BoxMeasure-v1.3.6-FREEZE-RECOVERY.apk.sha256
+          grep -F "versionCode='30'" badging.txt
+          grep -F "versionName='1.3.8'" badging.txt
+          cp "$APK" BoxMeasure-v1.3.8-PAPER-IMPORT-debug.apk
+          sha256sum BoxMeasure-v1.3.8-PAPER-IMPORT-debug.apk > BoxMeasure-v1.3.8-PAPER-IMPORT-debug.apk.sha256
+
       - uses: actions/upload-artifact@v4
         with:
-          name: BoxMeasure-v1.3.6-FREEZE-RECOVERY
+          name: BoxMeasure-v1.3.8-PAPER-IMPORT-debug
           path: |
-            BoxMeasure-v1.3.6-FREEZE-RECOVERY.apk
-            BoxMeasure-v1.3.6-FREEZE-RECOVERY.apk.sha256
+            BoxMeasure-v1.3.8-PAPER-IMPORT-debug.apk
+            BoxMeasure-v1.3.8-PAPER-IMPORT-debug.apk.sha256
           if-no-files-found: error
           retention-days: 30
