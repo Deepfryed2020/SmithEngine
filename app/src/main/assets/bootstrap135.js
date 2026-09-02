@@ -15,7 +15,9 @@ async function boot(){if(window.__bm136Booting||window.__bm136Ready)return;windo
  await wait(()=>window.BoxMeasureCompletion135,'completion rules');
  await load('bm-navigation135-script','navigation135.js');
  await wait(()=>window.__bm136NavReady,'navigation');
+ await load('bm-pabrai137-script','pabrai137.js');
+ await wait(()=>window.__bm137Ready,'Pabrai warehouse model');
  window.__bm136Ready=true;
-}catch(e){console.error('BoxMeasure 1.3.6 startup error',e);const d=document.createElement('div');d.style='position:fixed;left:12px;right:12px;top:12px;z-index:9999;background:#291515;color:#ffdede;border:1px solid #b55;border-radius:12px;padding:12px';d.textContent='BoxMeasure 1.3.6 startup error: '+String(e&&e.message?e.message:e);document.body.appendChild(d)}finally{window.__bm136Booting=false}}
+}catch(e){console.error('BoxMeasure 1.3.8 startup error',e);const d=document.createElement('div');d.style='position:fixed;left:12px;right:12px;top:12px;z-index:9999;background:#291515;color:#ffdede;border:1px solid #b55;border-radius:12px;padding:12px';d.textContent='BoxMeasure 1.3.8 startup error: '+String(e&&e.message?e.message:e);document.body.appendChild(d)}finally{window.__bm136Booting=false}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
