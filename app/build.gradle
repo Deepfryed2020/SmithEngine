@@ -1,33 +1,36 @@
-plugins {
-    id 'com.android.application'
-}
+plugins { id 'com.android.application' }
 
 android {
     namespace 'com.boxmeasure.app'
     compileSdk 35
-
     defaultConfig {
         applicationId 'com.boxmeasure.app'
         minSdk 26
         targetSdk 35
-        versionCode 28
-        versionName '1.3.6'
-        multiDexEnabled false
+        versionCode 30
+        versionName '1.3.8'
     }
-
-    buildTypes {
-        debug {
-            minifyEnabled true
-            shrinkResources false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+    def signingPath = System.getenv('BOXMEASURE_KEYSTORE_PATH')
+    signingConfigs {
+        permanent {
+            if (signingPath) {
+                storeFile file(signingPath)
+                storePassword System.getenv('BOXMEASURE_KEYSTORE_PASSWORD')
+                keyAlias 'boxmeasure-release'
+                keyPassword System.getenv('BOXMEASURE_KEY_PASSWORD') ?: System.getenv('BOXMEASURE_KEYSTORE_PASSWORD')
+            }
         }
+    }
+    buildTypes {
         release {
             minifyEnabled false
+            debuggable false
+            if (signingPath) signingConfig signingConfigs.permanent
         }
     }
+}
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
+dependencies {
+    implementation 'androidx.core:core:1.15.0'
+    implementation 'com.google.mlkit:text-recognition:16.0.1'
 }
