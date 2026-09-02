@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-const VERSION='1.3.6';
+const VERSION='1.3.8';
 function show(id){
   document.querySelectorAll('.page').forEach(x=>x.classList.toggle('on',x.id===id));
   document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('on',x.dataset.page===id));
@@ -26,7 +26,7 @@ function bind(){
   const sub=document.querySelector('header .sub');
   if(sub)sub.textContent='Warehouse Measurement & Visual Verification '+VERSION;
   let badge=document.getElementById('bmRuntime136');
-  if(!badge){badge=document.createElement('div');badge.id='bmRuntime136';badge.textContent='RUNTIME 1.3.6';badge.style='position:absolute;right:18px;top:72px;font-size:10px;font-weight:900;color:#9ff4d8;border:1px solid #2a8069;border-radius:999px;padding:3px 7px;background:#06251f;z-index:40';document.body.appendChild(badge);}
+  if(!badge){badge=document.createElement('div');badge.id='bmRuntime136';badge.textContent='RUNTIME 1.3.8';badge.style='position:absolute;right:18px;top:72px;font-size:10px;font-weight:900;color:#9ff4d8;border:1px solid #2a8069;border-radius:999px;padding:3px 7px;background:#06251f;z-index:40';document.body.appendChild(badge);}
   window.BoxMeasureNav136={show};window.__bm136NavReady=true;
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
